@@ -4,6 +4,7 @@ import connectDB from './db/connectDB.js';
 import cookieParser from 'cookie-parser';
 
 import userRouter from './routes/userRoute.js';
+import postRouter from './routes/postRoute.js';
 
 dotenv.config();
 
@@ -18,5 +19,6 @@ app.use(cookieParser());
 
 // Routes
 app.use('/api/users', userRouter);
+app.use('/api/posts', postRouter);
 
 app.listen(PORT, () => console.log(`server is running on Port ${PORT}`));
