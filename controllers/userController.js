@@ -84,5 +84,44 @@ const logout = async (req, res) => {
 
 }
 
+const followUnFollowUser = async (req, res) => {
 
-export { signup, login, logout };
+    try {
+        const { id } = req.params;
+
+        const userToModify = await User.findById(id);
+
+        const currentUser = await User.findById(req.user._id);
+
+        if(id === req.user._id) return res.status(400).json({message : 'You cannot follow/unFollow yourself'});
+
+        if(!currentUser || !userToModify) return res.status(400).json({message : 'User not found'});
+
+        const isFollowing = currentUser.following.includes(id);
+
+        if(isFollowing) {
+            // unFollow
+            await User.findByIdAndUpdate(req.user._id, {$pull : {following : id}});
+            await User.findByIdAndUpdate(id, {$pull : {followers : req.user._id}});
+
+            res.status(200).json({message : 'User unFollowed successfully'});
+
+        }else {
+            // follow
+            await User.findByIdAndUpdate(req.user._id, {$push : {following : id}});
+            await User.findByIdAndUpdate(id, {$push : {followers : req.user._id}});
+
+            res.status(200).json({message : 'User followed successfully'});
+        }
+        
+    } catch (error) {
+
+        res.status(500).json({message: error.message});
+
+        console.log('Error in follow Controller: ', error.message);
+    }
+
+}
+
+
+export { signup, login, logout, followUnFollowUser };
