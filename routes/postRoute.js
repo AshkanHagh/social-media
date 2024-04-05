@@ -10,5 +10,8 @@ router.post('/create', protectRouter, createPost);
 
 router.delete('/:id', protectRouter, deletePost);
 
+router.post('/like/:id', protectRouter, likeUnLikePost);
+
+router.post('/reply/:id', protectRouter, replayToPost);
 
 export default router;
