@@ -14,7 +14,7 @@ router.post('/logout', logout);
 
 router.post('/follow/:id', protectRouter, followUnFollowUser);
 
-router.post('/update/:id', protectRouter, updateUser);
+router.put('/update/:id', protectRouter, updateUser);
 
 
 export default router;

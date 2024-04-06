@@ -1,8 +1,10 @@
 import express from 'express';
-import { createPost, deletePost, getPosts, likeUnLikePost, replayToPost } from '../controllers/postController.js';
+import { createPost, deletePost, getFeedPosts, getPosts, likeUnLikePost, replayToPost } from '../controllers/postController.js';
 import protectRouter  from '../middleware/protectRoute.js';
 
 const router = express.Router();
+
+router.get('/feed', protectRouter, getFeedPosts);
 
 router.get('/:id', getPosts);
 
