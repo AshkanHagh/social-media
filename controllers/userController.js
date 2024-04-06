@@ -1,26 +1,35 @@
-import bcrypt from 'bcryptjs';
-import User from '../models/userModel.js';
-import generateTokenAndSetCookie from '../utils/generateToken.js';
-import {v2 as cloudinary} from 'cloudinary';
+import User from "../models/userModel.js";
+import Post from "../models/postModel.js";
+import bcrypt from "bcryptjs";
+import generateTokenAndSetCookie from "../utils/generateToken.js";
+import { v2 as cloudinary } from "cloudinary";
+import mongoose from "mongoose";
 
 const getUserProfile = async (req, res) => {
 
-    const { username } = req.params;
+	const { query } = req.params;
 
     try {
-        const user = await User.findOne({username}).select('-password').select('-updatedAt');
-        if(!user) return res.status(400).json({error : 'User not found'});
+		let user;
 
-        res.status(200).json({user});
-        
-    } catch (error) {
-        
-        res.status(500).json({error: error.message});
+		// query is userId
+		if (mongoose.Types.ObjectId.isValid(query)) {
+			user = await User.findOne({ _id: query }).select('-password').select('-updatedAt');
+		} else {
+			// query is username
+			user = await User.findOne({ username: query }).select('-password').select('-updatedAt');
+		}
 
-        console.log('Error in getUserProfile Controller: ', error.message);
-    }
+		if (!user) return res.status(404).json({ error: 'User not found' });
 
-}
+		res.status(200).json(user);
+	} catch (err) {
+
+		res.status(500).json({ error: err.message });
+
+		console.log("Error in getUserProfile: ", err.message);
+	}
+};
 
 const signup = async (req, res) => {
     
@@ -181,6 +190,17 @@ const updateUser = async (req, res) => {
         user.bio = bio || user.bio;
 
         user = await user.save();
+
+        await Post.updateMany(
+            {'replies.userId' : userId},
+            {
+                $set : {
+                    'replies.$[reply].username' : user.username,
+                    'replies.$[reply].userProfilePic' : user.profilePic
+                }
+            },
+            {arrayFilters: [{'reply.userId' : userId}]}
+        );
 
         user.password = null;
 
