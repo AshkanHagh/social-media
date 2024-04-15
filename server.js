@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import connectDB from './db/connectDB.js';
 import cookieParser from 'cookie-parser';
 import {v2 as cloudinary} from 'cloudinary';
+import cors from 'cors';
 
 import userRouter from './routes/userRoute.js';
 import postRouter from './routes/postRoute.js';
@@ -20,6 +21,7 @@ cloudinary.config({
 	api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
+app.use(cors({credentials : true}));
 app.use(express.json({limit : '50mb'}));
 app.use(express.urlencoded({ extended : true }));
 app.use(cookieParser());

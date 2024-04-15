@@ -12,7 +12,7 @@ Features :
 
 ### Description
 
-A REST API I watched from a [YouTube](https://youtu.be/tvKhOAlAjTY?si=Go7KOjeKUx6sXGhf) video and learned new things through it
+The REST API I watched from a [YouTube](https://youtu.be/tvKhOAlAjTY?si=Go7KOjeKUx6sXGhf) video and learned new things from it. I had done a similar [project before](https://github.com/AshkanHagh/Express-Twitter-Clone-API) with my own knowledge, which I thought turned out pretty well even though I hadn't seen a video.
 
 ### Install packages
 ```
@@ -23,6 +23,10 @@ npm i
 MONGODB_URL = 
 PORT = 
 JWT_SECRET =
+# https://cloudinary.com
+CLOUDINARY_CLOUD_NAME =
+CLOUDINARY_API_KEY =
+CLOUDINARY_API_SECRET =
 ```
 
 ### Start the app
