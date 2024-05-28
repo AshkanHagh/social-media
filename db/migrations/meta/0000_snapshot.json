@@ -1,5 +1,5 @@
 {
-  "id": "6271c0bd-f6a6-4a59-83ad-fc8657da58cd",
+  "id": "b0210a4c-f692-4b08-bf78-db93a1793cfb",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "6",
   "dialect": "postgresql",
@@ -8,38 +8,17 @@
       "name": "followers",
       "schema": "",
       "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
         "userId": {
           "name": "userId",
           "type": "uuid",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
-        "followerId": {
-          "name": "followerId",
+        "followersId": {
+          "name": "followersId",
           "type": "uuid",
           "primaryKey": false,
-          "notNull": true
-        },
-        "createdAt": {
-          "name": "createdAt",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false,
-          "default": "now()"
-        },
-        "updatedAt": {
-          "name": "updatedAt",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false,
-          "default": "now()"
+          "notNull": false
         }
       },
       "indexes": {},
@@ -57,12 +36,12 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
-        "followers_followerId_users_id_fk": {
-          "name": "followers_followerId_users_id_fk",
+        "followers_followersId_users_id_fk": {
+          "name": "followers_followersId_users_id_fk",
           "tableFrom": "followers",
           "tableTo": "users",
           "columnsFrom": [
-            "followerId"
+            "followersId"
           ],
           "columnsTo": [
             "id"
@@ -74,72 +53,44 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
-    "public.posts": {
-      "name": "posts",
+    "public.following": {
+      "name": "following",
       "schema": "",
       "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "title": {
-          "name": "title",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "fullName": {
-          "name": "fullName",
-          "type": "varchar(500)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "image": {
-          "name": "image",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "default": "''"
-        },
-        "isPublish": {
-          "name": "isPublish",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": false,
-          "default": false
-        },
-        "author": {
-          "name": "author",
+        "userId": {
+          "name": "userId",
           "type": "uuid",
           "primaryKey": false,
           "notNull": false
         },
-        "createdAt": {
-          "name": "createdAt",
-          "type": "timestamp",
+        "followingId": {
+          "name": "followingId",
+          "type": "uuid",
           "primaryKey": false,
-          "notNull": false,
-          "default": "now()"
-        },
-        "updatedAt": {
-          "name": "updatedAt",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false,
-          "default": "now()"
+          "notNull": false
         }
       },
       "indexes": {},
       "foreignKeys": {
-        "posts_author_users_id_fk": {
-          "name": "posts_author_users_id_fk",
-          "tableFrom": "posts",
+        "following_userId_users_id_fk": {
+          "name": "following_userId_users_id_fk",
+          "tableFrom": "following",
           "tableTo": "users",
           "columnsFrom": [
-            "author"
+            "userId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "following_followingId_users_id_fk": {
+          "name": "following_followingId_users_id_fk",
+          "tableFrom": "following",
+          "tableTo": "users",
+          "columnsFrom": [
+            "followingId"
           ],
           "columnsTo": [
             "id"
@@ -149,6 +100,76 @@
         }
       },
       "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "public.profileInfo": {
+      "name": "profileInfo",
+      "schema": "",
+      "columns": {
+        "userId": {
+          "name": "userId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "profilePic": {
+          "name": "profilePic",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "fullName": {
+          "name": "fullName",
+          "type": "varchar(500)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "gender": {
+          "name": "gender",
+          "type": "genderEnum",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "isBan": {
+          "name": "isBan",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": false
+        },
+        "isFreeze": {
+          "name": "isFreeze",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "profileInfo_userId_users_id_fk": {
+          "name": "profileInfo_userId_users_id_fk",
+          "tableFrom": "profileInfo",
+          "tableTo": "users",
+          "columnsFrom": [
+            "userId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "profileInfo_userId_pk": {
+          "name": "profileInfo_userId_pk",
+          "columns": [
+            "userId"
+          ]
+        }
+      },
       "uniqueConstraints": {}
     },
     "public.users": {
@@ -164,13 +185,6 @@
         },
         "fullName": {
           "name": "fullName",
-          "type": "varchar(500)",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "''"
-        },
-        "email": {
-          "name": "email",
           "type": "varchar(255)",
           "primaryKey": false,
           "notNull": true
@@ -181,12 +195,11 @@
           "primaryKey": false,
           "notNull": true
         },
-        "profilePic": {
-          "name": "profilePic",
-          "type": "text",
+        "email": {
+          "name": "email",
+          "type": "varchar(255)",
           "primaryKey": false,
-          "notNull": false,
-          "default": "''"
+          "notNull": true
         },
         "role": {
           "name": "role",
@@ -195,27 +208,6 @@
           "primaryKey": false,
           "notNull": false,
           "default": "'user'"
-        },
-        "isBan": {
-          "name": "isBan",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": false,
-          "default": false
-        },
-        "isFreeze": {
-          "name": "isFreeze",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": false,
-          "default": false
-        },
-        "gender": {
-          "name": "gender",
-          "type": "genderEnum",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true
         },
         "password": {
           "name": "password",
@@ -242,18 +234,18 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "users_email_unique": {
-          "name": "users_email_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "email"
-          ]
-        },
         "users_username_unique": {
           "name": "users_username_unique",
           "nullsNotDistinct": false,
           "columns": [
             "username"
+          ]
+        },
+        "users_email_unique": {
+          "name": "users_email_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "email"
           ]
         }
       }

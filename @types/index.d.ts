@@ -1,4 +1,4 @@
-import type { FollowsTable, PostTable, UserTable } from '../db/schema';
+import type { FollowersTable, FollowingTable, UserProfileInfoTable, UserTable } from '../db/schema';
 
 
 type TMailOption = {
@@ -16,11 +16,14 @@ type TErrorHandler = {
 type TInferSelectUser = typeof UserTable.$inferSelect
 type TInferInsertUser = typeof UserTable.$inferInsert
 
-type TInferSelectFollows = typeof FollowsTable.$inferSelect
-type TInferInsertFollows = typeof FollowsTable.$inferInsert
+type TInferSelectUserProfileInfo = typeof UserProfileInfoTable.$inferSelect
+type TInferInsertUserProfileInfo = typeof UserProfileInfoTable.$inferInsert
 
-type TInferSelectPost = typeof PostTable.$inferSelect
-type TInferInsertPost = typeof PostTable.$inferInsert
+type TInferSelectFollowers = typeof FollowersTable.$inferSelect
+type TInferInsertFollowers = typeof FollowersTable.$inferInsert
+
+type TInferSelectFollowing = typeof FollowingTable.$inferSelect
+type TInferInsertFollowing = typeof FollowingTable.$inferInsert
 
 declare global {
     namespace Express {

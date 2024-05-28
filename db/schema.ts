@@ -1,5 +1,5 @@
 import { relations } from 'drizzle-orm';
-import { boolean, pgEnum, pgTable, text, timestamp, uuid, varchar } from 'drizzle-orm/pg-core';
+import { boolean, pgEnum, pgTable, primaryKey, text, timestamp, uuid, varchar } from 'drizzle-orm/pg-core';
 
 export const RoleEnum = pgEnum('roleEnum', ['admin', 'user']);
 export const GenderEnum = pgEnum('genderEnum', ['male', 'female'])
@@ -7,63 +7,72 @@ export const GenderEnum = pgEnum('genderEnum', ['male', 'female'])
 export const UserTable = pgTable('users', {
     id : uuid('id').primaryKey().defaultRandom(),
     fullName : varchar('fullName', {length : 255}).notNull(),
-    email : varchar('email', {length : 255}).notNull().unique(),
     username : varchar('username', {length : 255}).notNull().unique(),
-    profilePic : text('profilePic').default(''),
-    bio : varchar('fullName', {length : 500}).notNull().default(''),
+    email : varchar('email', {length : 255}).notNull().unique(),
     role : RoleEnum('role').default('user'),
-    isBan : boolean('isBan').default(false),
-    isFreeze : boolean('isFreeze').default(false),
-    gender : GenderEnum('gender').notNull(),
     password : text('password').notNull(),
     createdAt : timestamp('createdAt').defaultNow(),
     updatedAt : timestamp('updatedAt').defaultNow()
 });
 
-export const FollowsTable = pgTable('followers', {
-    id : uuid('id').primaryKey().defaultRandom(),
-    userId : uuid('userId').references(() => UserTable.id).notNull(),
-    followerId : uuid('followerId').references(() => UserTable.id).notNull(),
-    createdAt : timestamp('createdAt').defaultNow(),
-    updatedAt : timestamp('updatedAt').defaultNow()
+export const UserProfileInfoTable = pgTable('profileInfo', {
+    userId : uuid('userId').references(() => UserTable.id),
+    profilePic : text('profilePic'),
+    bio : varchar('fullName', {length : 500}).notNull(),
+    gender : GenderEnum('gender').notNull(),
+    isBan : boolean('isBan').default(false),
+    isFreeze : boolean('isFreeze').default(false)
+}, table => {
+    return {pk : primaryKey({columns : [table.userId]})}
 });
 
-export const PostTable = pgTable('posts', {
-    id : uuid('id').primaryKey().defaultRandom(),
-    title : varchar('title', {length : 255}).notNull(),
-    description : varchar('fullName', {length : 500}).notNull(),
-    image : text('image').default(''),
-    isPublish : boolean('isPublish').default(false),
-    authorId : uuid('author').references(() => UserTable.id),
-    createdAt : timestamp('createdAt').defaultNow(),
-    updatedAt : timestamp('updatedAt').defaultNow()
+export const FollowersTable = pgTable('followers', {
+    userId : uuid('userId').references(() => UserTable.id),
+    followersId : uuid('followersId').references(() => UserTable.id),
 });
 
-export const UserTableRelations = relations(UserTable, ({many}) => {
+export const FollowingTable = pgTable('following', {
+    userId : uuid('userId').references(() => UserTable.id),
+    followingId : uuid('followingId').references(() => UserTable.id),
+});
+
+export const UserTableRelations = relations(UserTable, ({one, many}) => {
     return {
-        followings : many(FollowsTable),
-        posts : many(PostTable)
+        profileInfo : one(UserProfileInfoTable),
+        followers : one(FollowersTable, {
+            fields : [UserTable.id],
+            references : [FollowersTable.userId]
+        }),
+        following : one(FollowingTable, {
+            fields : [UserTable.id],
+            references : [FollowingTable.userId]
+        })
     }
 });
 
-export const FollowsTableRelations = relations(FollowsTable, ({one, many}) => {
+export const ProfileInfoTableRelations = relations(UserProfileInfoTable, ({one}) => {
     return {
-        users : one(UserTable, {
-            fields : [FollowsTable.userId],
-            references : [UserTable.id]
-        }),
-        follows : one(UserTable, {
-            fields : [FollowsTable.followerId],
+        user : one(UserTable, {
+            fields : [UserProfileInfoTable.userId],
             references : [UserTable.id]
         })
     }
 });
 
-export const PostTableRelations = relations(PostTable, ({one}) => {
+export const FollowersTableRelations = relations(FollowersTable, ({one, many}) => {
     return {
-        author : one(UserTable, {
-            fields : [PostTable.authorId],
-            references : [UserTable.id]
+        followers : one(UserTable, {
+            fields : [FollowersTable.followersId, FollowersTable.userId],
+            references : [UserTable.id, UserTable.id]
+        })
+    }
+});
+
+export const FollowingTableRelations = relations(FollowingTable, ({one, many}) => {
+    return {
+        following : one(UserTable, {
+            fields : [FollowingTable.followingId, FollowingTable.userId],
+            references : [UserTable.id, UserTable.id]
         })
     }
 });
