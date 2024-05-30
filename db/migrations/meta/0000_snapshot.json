@@ -1,5 +1,5 @@
 {
-  "id": "b0210a4c-f692-4b08-bf78-db93a1793cfb",
+  "id": "b1ceeeae-6223-4906-9f8f-12c48c4d6eb7",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "6",
   "dialect": "postgresql",
@@ -8,63 +8,14 @@
       "name": "followers",
       "schema": "",
       "columns": {
-        "userId": {
-          "name": "userId",
+        "followerId": {
+          "name": "followerId",
           "type": "uuid",
           "primaryKey": false,
           "notNull": false
         },
-        "followersId": {
-          "name": "followersId",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "followers_userId_users_id_fk": {
-          "name": "followers_userId_users_id_fk",
-          "tableFrom": "followers",
-          "tableTo": "users",
-          "columnsFrom": [
-            "userId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "followers_followersId_users_id_fk": {
-          "name": "followers_followersId_users_id_fk",
-          "tableFrom": "followers",
-          "tableTo": "users",
-          "columnsFrom": [
-            "followersId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
-    },
-    "public.following": {
-      "name": "following",
-      "schema": "",
-      "columns": {
-        "userId": {
-          "name": "userId",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "followingId": {
-          "name": "followingId",
+        "followedId": {
+          "name": "followedId",
           "type": "uuid",
           "primaryKey": false,
           "notNull": false
@@ -72,12 +23,12 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "following_userId_users_id_fk": {
-          "name": "following_userId_users_id_fk",
-          "tableFrom": "following",
+        "followers_followerId_users_id_fk": {
+          "name": "followers_followerId_users_id_fk",
+          "tableFrom": "followers",
           "tableTo": "users",
           "columnsFrom": [
-            "userId"
+            "followerId"
           ],
           "columnsTo": [
             "id"
@@ -85,12 +36,12 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
-        "following_followingId_users_id_fk": {
-          "name": "following_followingId_users_id_fk",
-          "tableFrom": "following",
+        "followers_followedId_users_id_fk": {
+          "name": "followers_followedId_users_id_fk",
+          "tableFrom": "followers",
           "tableTo": "users",
           "columnsFrom": [
-            "followingId"
+            "followedId"
           ],
           "columnsTo": [
             "id"
@@ -99,7 +50,15 @@
           "onUpdate": "no action"
         }
       },
-      "compositePrimaryKeys": {},
+      "compositePrimaryKeys": {
+        "followers_followedId_followerId_pk": {
+          "name": "followers_followedId_followerId_pk",
+          "columns": [
+            "followedId",
+            "followerId"
+          ]
+        }
+      },
       "uniqueConstraints": {}
     },
     "public.profileInfo": {
@@ -109,8 +68,8 @@
         "userId": {
           "name": "userId",
           "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
+          "primaryKey": true,
+          "notNull": true
         },
         "profilePic": {
           "name": "profilePic",
@@ -122,28 +81,22 @@
           "name": "fullName",
           "type": "varchar(500)",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "gender": {
           "name": "gender",
           "type": "genderEnum",
           "typeSchema": "public",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
-        "isBan": {
-          "name": "isBan",
-          "type": "boolean",
+        "status": {
+          "name": "status",
+          "type": "statusEnum",
+          "typeSchema": "public",
           "primaryKey": false,
           "notNull": false,
-          "default": false
-        },
-        "isFreeze": {
-          "name": "isFreeze",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": false,
-          "default": false
+          "default": "'active'"
         }
       },
       "indexes": {},
@@ -162,14 +115,7 @@
           "onUpdate": "no action"
         }
       },
-      "compositePrimaryKeys": {
-        "profileInfo_userId_pk": {
-          "name": "profileInfo_userId_pk",
-          "columns": [
-            "userId"
-          ]
-        }
-      },
+      "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
     "public.users": {
@@ -230,22 +176,23 @@
           "default": "now()"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "emailIndex": {
+          "name": "emailIndex",
+          "columns": [
+            "email"
+          ],
+          "isUnique": true
+        }
+      },
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "users_username_unique": {
-          "name": "users_username_unique",
+        "uniqueUsername": {
+          "name": "uniqueUsername",
           "nullsNotDistinct": false,
           "columns": [
             "username"
-          ]
-        },
-        "users_email_unique": {
-          "name": "users_email_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "email"
           ]
         }
       }
@@ -266,6 +213,15 @@
       "values": [
         "admin",
         "user"
+      ]
+    },
+    "public.statusEnum": {
+      "name": "statusEnum",
+      "schema": "public",
+      "values": [
+        "ban",
+        "freeze",
+        "active"
       ]
     }
   },

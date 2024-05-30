@@ -2,11 +2,11 @@
   "name": "threads-clone",
   "module": "server.ts",
   "type": "module",
-  "scripts" : {
-    "dev" : "bun --watch server.ts",
-    "db:generate" : "bunx drizzle-kit generate",
-    "db:migrate" : "bun db/migrate.ts",
-    "db:studio" : "bunx drizzle-kit studio"
+  "scripts": {
+    "dev": "bun --watch server.ts",
+    "db:generate": "bunx drizzle-kit generate",
+    "db:migrate": "bun db/migrate.ts",
+    "db:studio": "bunx drizzle-kit studio"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",

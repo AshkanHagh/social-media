@@ -1,4 +1,5 @@
-import type { FollowersTable, FollowingTable, UserProfileInfoTable, UserTable } from '../db/schema';
+import type { InferInsertModel, InferSelectModel } from 'drizzle-orm';
+import type { FollowersTable, FollowingTable, ProfileInfoTable, UserTable } from '../db/schema';
 
 
 type TMailOption = {
@@ -13,17 +14,14 @@ type TErrorHandler = {
     message : string
 }
 
-type TInferSelectUser = typeof UserTable.$inferSelect
-type TInferInsertUser = typeof UserTable.$inferInsert
+type TInferSelectUser = InferSelectModel<typeof UserTable>
+type TInferInsertUser = InferInsertModel<typeof UserTable>
 
-type TInferSelectUserProfileInfo = typeof UserProfileInfoTable.$inferSelect
-type TInferInsertUserProfileInfo = typeof UserProfileInfoTable.$inferInsert
+type TInferSelectProfileInfo = InferSelectModel<typeof ProfileInfoTable>
+type TInferInsertProfileInfo = InferInsertModel<typeof ProfileInfoTable>
 
-type TInferSelectFollowers = typeof FollowersTable.$inferSelect
-type TInferInsertFollowers = typeof FollowersTable.$inferInsert
-
-type TInferSelectFollowing = typeof FollowingTable.$inferSelect
-type TInferInsertFollowing = typeof FollowingTable.$inferInsert
+type TInferSelectFollowers = InferSelectModel<typeof FollowersTable>
+type TInferInsertFollowers = InferInsertModel<typeof FollowersTable>
 
 declare global {
     namespace Express {
@@ -31,6 +29,11 @@ declare global {
             user? : TInferSelectUser
         }
     }
+}
+
+type TUpdatePassword = {
+    oldPassword : TInferSelectUser['password'];
+    newPassword : TInferSelectUser['password'];
 }
 
 type TActivationToken = {

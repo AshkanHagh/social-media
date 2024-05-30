@@ -24,7 +24,9 @@ export const sendToken = (user : TInferSelectUser, statusCode : number, res : Re
     const accessToken = jwt.sign({id : user.id}, process.env.ACCESS_TOKEN as Secret, {expiresIn : '1h'});
     const refreshToken = jwt.sign({id : user.id}, process.env.REFRESH_TOKEN as Secret, {expiresIn : '7d'});
 
-    redis.set(`user:${user.id}`, JSON.stringify(user), 'EX', 604800);
+    const {password, ...others} = user;
+
+    redis.set(`user:${user.id}`, JSON.stringify(others), 'EX', 604800);
 
     if(process.env.NODE_ENV) {
         accessTokenOption.secure = true
@@ -33,5 +35,5 @@ export const sendToken = (user : TInferSelectUser, statusCode : number, res : Re
     res.cookie('access_token', accessToken, accessTokenOption);
     res.cookie('refresh_token', refreshToken, refreshTokenOption);
 
-    res.status(statusCode).json({success : true, user, accessToken});
+    res.status(statusCode).json({success : true, others, accessToken});
 }
