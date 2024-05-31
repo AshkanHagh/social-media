@@ -6,7 +6,7 @@ import type { TInferInsertProfileInfo, TInferInsertUser, TInferSelectProfileInfo
 import { db } from '../db/db';
 import { FollowersTable, ProfileInfoTable, UserTable } from '../db/schema';
 import { and, eq } from 'drizzle-orm';
-import { validatePassword, validateProfileInfo } from '../validation/Joi';
+import { validatePassword, validateProfileInfo } from '../validations/Joi';
 import bcrypt, { hash } from 'bcrypt';
 import sendEmail from '../utils/sendMail';
 

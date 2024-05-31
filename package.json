@@ -3,9 +3,9 @@
   "module": "server.ts",
   "type": "module",
   "scripts": {
-    "dev": "bun --watch server.ts",
+    "dev": "bun --watch src/server.ts",
     "db:generate": "bunx drizzle-kit generate",
-    "db:migrate": "bun db/migrate.ts",
+    "db:migrate": "bun src/db/migrate.ts",
     "db:studio": "bunx drizzle-kit studio"
   },
   "devDependencies": {

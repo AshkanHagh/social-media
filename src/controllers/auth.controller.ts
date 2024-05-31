@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction } from 'express';
 import { CatchAsyncError } from '../middlewares/catchAsyncError';
 import ErrorHandler from '../utils/errorHandler';
-import { validateLogin, validateRegister, validateVerifyAccount } from '../validation/Joi';
+import { validateLogin, validateRegister, validateVerifyAccount } from '../validations/Joi';
 import type { TActivationRequest, TInferInsertUser, TInferSelectUser } from '../@types';
 import { db } from '../db/db';
 import redis from '../db/redis';

@@ -3,9 +3,9 @@ import Joi from 'joi';
 const validator = (schema : Joi.Schema) => (payload : object) => schema.validate(payload, {abortEarly : false});
 
 const register = Joi.object({
-    fullName : Joi.string().required().trim(),
-    email : Joi.string().email().required().trim(),
-    username : Joi.string().required().trim(),
+    fullName : Joi.string().required().trim().max(255),
+    email : Joi.string().email().required().trim().max(255),
+    username : Joi.string().required().trim().max(255),
     password : Joi.string().min(6).required().trim()
 });
 
@@ -19,7 +19,7 @@ const verifyAccount = Joi.object({
 export const validateVerifyAccount = validator(verifyAccount);
 
 const login = Joi.object({
-    email : Joi.string().email().required().trim(),
+    email : Joi.string().email().required().trim().max(255),
     password : Joi.string().min(6).required().trim(),
 });
 
