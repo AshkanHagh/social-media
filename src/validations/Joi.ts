@@ -47,3 +47,16 @@ const updateInfo = Joi.object({
 });
 
 export const validateAccountInfo = validator(updateInfo);
+
+const newPost = Joi.object({
+    text : Joi.string().required().trim().max(500),
+    image : Joi.string().trim()
+});
+
+export const validateNewPost = validator(newPost);
+
+const newComment = Joi.object({
+    text : Joi.string().required().trim().max(500),
+});
+
+export const validateNewComment = validator(newComment);

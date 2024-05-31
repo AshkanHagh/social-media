@@ -7,18 +7,25 @@ const router = Router();
 
 // Authentication Routes
 router.post('/auth/register', register);
+
 router.post('/auth/verify', verifyAccount);
+
 router.post('/auth/login', login);
+
 router.get('/logout', logout);
+
 router.get('/refresh', refreshToken);
 
 // User Routes
 router.get('/search/:query', searchWithUsername);
+
 router.put('/follow/:id', isAuthenticated, follow);
 
 // Account Info Routes
 router.patch('/account/profile', isAuthenticated, updateProfileInfo);
+
 router.patch('/account/password', isAuthenticated, updateAccountPassword);
+
 router.patch('/account/info', isAuthenticated, updateAccountInfo);
 
 router.all('*', (req : Request, res : Response, next : NextFunction) => {
