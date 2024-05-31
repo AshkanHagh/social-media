@@ -7,7 +7,7 @@ import { db } from '../db/db';
 import { FollowersTable, ProfileInfoTable, UserTable } from '../db/schema';
 import { and, eq } from 'drizzle-orm';
 import { validateAccountInfo, validatePassword, validateProfileInfo } from '../validations/Joi';
-import bcrypt, { hash } from 'bcrypt';
+import bcrypt from 'bcrypt';
 import sendEmail from '../utils/sendMail';
 
 export const searchWithUsername = CatchAsyncError(async (req : Request, res : Response, next : NextFunction) => {

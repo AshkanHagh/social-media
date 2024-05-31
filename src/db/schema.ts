@@ -1,5 +1,5 @@
 import { relations } from 'drizzle-orm';
-import { boolean, pgEnum, pgTable, primaryKey, text, timestamp, unique, uniqueIndex, uuid, varchar } from 'drizzle-orm/pg-core';
+import { pgEnum, pgTable, primaryKey, text, timestamp, unique, uniqueIndex, uuid, varchar } from 'drizzle-orm/pg-core';
 
 export const Role = pgEnum('roleEnum', ['admin', 'user']);
 export const Gender = pgEnum('genderEnum', ['male', 'female']);
@@ -36,7 +36,46 @@ export const FollowersTable = pgTable('followers', {
     return {pk : primaryKey({columns : [table.followedId, table.followerId]})}
 });
 
-export const UserTableRelations = relations(UserTable, ({one}) => {
+export const PostTable = pgTable('posts', {
+    id : uuid('id').primaryKey().defaultRandom(),
+    text : varchar('text', {length : 500}).notNull(),
+    image : varchar('image', {length : 500}),
+    authorId : uuid('authorId').references(() => UserTable.id).notNull(),
+    createdAt : timestamp('createdAt').defaultNow(),
+    updatedAt : timestamp('updatedAt').defaultNow().$onUpdate(() => new Date())
+});
+
+export const CommentTable = pgTable('comments', {
+    id : uuid('id').primaryKey().defaultRandom(),
+    text : varchar('text', {length : 255}).notNull(),
+    authorId : uuid('authorId').references(() => UserTable.id),
+    createdAt : timestamp('createdAt').defaultNow(),
+    updatedAt : timestamp('updatedAt').defaultNow().$onUpdate(() => new Date())
+});
+
+export const RepliesTable = pgTable('replies', {
+    id : uuid('id').primaryKey().defaultRandom(),
+    text : varchar('text', {length : 255}).notNull(),
+    commentId : uuid('commentId').references(() => CommentTable.id),
+    createdAt : timestamp('createdAt').defaultNow(),
+    updatedAt : timestamp('updatedAt').defaultNow().$onUpdate(() => new Date())
+});
+
+export const LikesTable = pgTable('likes', {
+    postId : uuid('postId').references(() => PostTable.id),
+    userId : uuid('userId').references(() => UserTable.id)
+}, table => {
+    return {pk : primaryKey({columns : [table.postId, table.userId]})}
+});
+
+export const PostCommentTable = pgTable('post_comment', {
+    postId : uuid('postId').references(() => PostTable.id),
+    commentId : uuid('commentId').references(() => CommentTable.id),
+}, table => {
+    return {pk : primaryKey({columns : [table.postId, table.commentId]})}
+});
+
+export const UserTableRelations = relations(UserTable, ({one, many}) => {
     return {
         profileInfo : one(ProfileInfoTable),
         follower : one(FollowersTable, {
@@ -48,7 +87,10 @@ export const UserTableRelations = relations(UserTable, ({one}) => {
             fields : [UserTable.id],
             references : [FollowersTable.followerId],
             relationName : 'followers'
-        })
+        }),
+        posts : many(PostTable),
+        comments : many(CommentTable),
+        likes : many(LikesTable)
     }
 });
 
@@ -73,6 +115,65 @@ export const FollowersTableRelations = relations(FollowersTable, ({one, many}) =
             fields : [FollowersTable.followerId],
             references : [UserTable.id],
             relationName : 'followersId'
+        })
+    }
+});
+
+export const PostTableRelations = relations(PostTable, ({one, many}) => {
+    return {
+        author : one(UserTable, {
+            fields : [PostTable.authorId],
+            references : [UserTable.id],
+            relationName : 'postAuthor'
+        }),
+        comments : many(PostCommentTable),
+        likes : many(LikesTable)
+    }
+});
+
+export const CommentTableRelations = relations(CommentTable, ({one, many}) => {
+    return {
+        author : one(UserTable, {
+            fields : [CommentTable.authorId],
+            references : [UserTable.id],
+            relationName : 'commentAuthor'
+        }),
+        posts : many(PostCommentTable),
+        replies : many(RepliesTable)
+    }
+});
+
+export const PostCommentTableRelations = relations(PostCommentTable, ({one, many}) => {
+    return {
+        post : one(PostTable, {
+            fields : [PostCommentTable.postId],
+            references : [PostTable.id]
+        }),
+        comment : one(CommentTable, {
+            fields : [PostCommentTable.commentId],
+            references : [CommentTable.id]
+        })
+    }
+});
+
+export const RepliesTableRelations = relations(RepliesTable, ({one, many}) => {
+    return {
+        comment : one(CommentTable, {
+            fields : [RepliesTable.commentId],
+            references : [CommentTable.id]
+        })
+    }
+});
+
+export const LikesTableRelations = relations(LikesTable, ({one, many}) => {
+    return {
+        post : one(PostTable, {
+            fields : [LikesTable.postId],
+            references : [PostTable.id]
+        }),
+        user : one(UserTable, {
+            fields : [LikesTable.userId],
+            references : [UserTable.id]
         })
     }
 })
