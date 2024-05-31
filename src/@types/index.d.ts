@@ -1,14 +1,6 @@
 import type { InferInsertModel, InferSelectModel } from 'drizzle-orm';
 import type { FollowersTable, FollowingTable, ProfileInfoTable, UserTable } from '../db/schema';
 
-
-type TMailOption = {
-    subject : string
-    text : string
-    email : string
-    html : string
-}
-
 type TErrorHandler = {
     statusCode : Number
     message : string
@@ -29,6 +21,13 @@ declare global {
             user? : TInferSelectUser
         }
     }
+}
+
+type TMailOption = {
+    subject : string
+    text : string
+    email : TInferSelectUser['email']
+    html : string
 }
 
 type TUpdatePassword = {

@@ -6,7 +6,7 @@ import type { TInferInsertProfileInfo, TInferInsertUser, TInferSelectProfileInfo
 import { db } from '../db/db';
 import { FollowersTable, ProfileInfoTable, UserTable } from '../db/schema';
 import { and, eq } from 'drizzle-orm';
-import { validatePassword, validateProfileInfo } from '../validations/Joi';
+import { validateAccountInfo, validatePassword, validateProfileInfo } from '../validations/Joi';
 import bcrypt, { hash } from 'bcrypt';
 import sendEmail from '../utils/sendMail';
 
@@ -80,7 +80,7 @@ export const updateProfileInfo = CatchAsyncError(async (req : Request, res : Res
         if(error) return next(new ErrorHandler(error.message, 400));
         const { profilePic, bio, gender } = value as TInferInsertProfileInfo;
 
-        const user = await db.query.UserTable.findFirst({where : (table, funcs) => funcs.eq(table.id, req.user?.id!)}) as TInferSelectUser;
+        const user = req.user as TInferSelectUser;
 
         const profile = await db.query.ProfileInfoTable.findFirst({
             where : (table, funcs) => funcs.eq(table.userId, user.id)
@@ -147,6 +147,37 @@ export const updateAccountPassword = CatchAsyncError(async (req : Request, res :
 
         res.status(200).json({success : true, message : 'Password has been updated'});
 
+    } catch (error : any) {
+        return next(new ErrorHandler(error.message, 400));
+    }
+});
+
+export const updateAccountInfo = CatchAsyncError(async (req : Request, res : Response, next : NextFunction) => {
+
+    try {
+        const {error, value} = validateAccountInfo(req.body);
+        if(error) return next(new ErrorHandler(error.message, 400));
+        const { fullName, username, email } = value as TInferSelectUser;
+        const userToModify = req.user as TInferSelectUser;
+
+        if(email || username) {
+            const isUserExists = await db.query.UserTable.findFirst({
+                where : (table, funcs) => funcs.or(funcs.eq(table.email, email), funcs.eq(table.username, username))
+            });
+
+            if(isUserExists) return next(new ErrorHandler('Email or Username already exists', 400));
+        }
+
+        const updateInfo = await db.update(UserTable).set({
+            fullName : fullName || userToModify?.fullName, email : email || userToModify.email, username : username || userToModify.username
+        }).where(eq(UserTable.id, userToModify.id)).returning();
+
+        const {password, ...others} = updateInfo[0];
+
+        await redis.set(`user:${userToModify.id}`, JSON.stringify(others), 'EX', 604800);
+        
+        res.status(200).json({success : true, others});
+        
     } catch (error : any) {
         return next(new ErrorHandler(error.message, 400));
     }

@@ -1,29 +1,29 @@
-import { Router } from 'express';
+import { Router, type NextFunction, type Request, type Response } from 'express';
 import { login, logout, refreshToken, register, verifyAccount } from '../controllers/auth.controller';
-import { follow, searchWithUsername, updateAccountPassword, updateProfileInfo } from '../controllers/user.controller';
+import { follow, searchWithUsername, updateAccountInfo, updateAccountPassword, updateProfileInfo } from '../controllers/user.controller';
 import { isAuthenticated } from '../middlewares/auth';
 
 const router = Router();
 
-// authentication
+// Authentication Routes
 router.post('/auth/register', register);
-
 router.post('/auth/verify', verifyAccount);
-
 router.post('/auth/login', login);
-
 router.get('/logout', logout);
-
 router.get('/refresh', refreshToken);
 
-// user
+// User Routes
 router.get('/search/:query', searchWithUsername);
-
 router.put('/follow/:id', isAuthenticated, follow);
 
-// account info
-router.patch('/account/info/:id', isAuthenticated, updateProfileInfo);
+// Account Info Routes
+router.patch('/account/profile', isAuthenticated, updateProfileInfo);
+router.patch('/account/password', isAuthenticated, updateAccountPassword);
+router.patch('/account/info', isAuthenticated, updateAccountInfo);
 
-router.patch('/account/password/:id', isAuthenticated, updateAccountPassword);
+router.all('*', (req : Request, res : Response, next : NextFunction) => {
+    const error = new Error(`Route ${req.originalUrl} not found`);
+    next(error);
+});
 
 export default router;

@@ -39,3 +39,11 @@ const updatePassword = Joi.object({
 });
 
 export const validatePassword = validator(updatePassword);
+
+const updateInfo = Joi.object({
+    fullName : Joi.string().trim().max(255),
+    username : Joi.string().trim().max(255),
+    email : Joi.string().email().trim().max(255)
+});
+
+export const validateAccountInfo = validator(updateInfo);
