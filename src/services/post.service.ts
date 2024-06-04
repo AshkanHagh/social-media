@@ -1,26 +1,10 @@
 import type { NextFunction, Request } from 'express';
-import type { TFindPostWithAuthor, TFixedPostResult, TInferSelectLike, TInferSelectPost, TPagination } from '../@types';
+import type { TFindPostWithAuthor, TInferSelectLike, TInferSelectPost, TPagination } from '../@types';
 import { db } from '../db/db';
 import ErrorHandler from '../utils/errorHandler';
 import { and, eq, sql } from 'drizzle-orm';
 import { LikesTable, PostTable } from '../db/schema';
 import redis from '../db/redis';
-
-// export const fixedResult = <T extends TFixedPostResult>(post : T) => {
-    
-//     const author = post.author;
-//     const comment = post.comments.map(comment => comment.comment,);
-//     const likes = post.likes.map(like => like.user);
-
-//     const fixedPostResult = {
-//         id : post.id, text : post.text, image : post.image, createdAt : post.createdAt, updatedAt : post.updatedAt,
-//         author : {id : author.id, username : author.username},
-//         comment : comment.sort((a, b) => new Date(b!.createdAt!).getTime() - new Date(a!.createdAt!).getTime()),
-//         like : likes.map(liker => ({id : liker!.id, username : liker!.username}))
-//     }
-
-//     return fixedPostResult;
-// }
 
 export const fixedPostResult = <T extends TFindPostWithAuthor>(post : T) => {
     const { fullName : authorFullName, email : authorEmail, username : authorUsername, role : authorRole } = post.author;
@@ -36,7 +20,8 @@ export const insertPost = async (authorId : string, text : string, image : strin
     const post = await db.insert(PostTable).values({authorId, text, image : image || ''}).returning();
     const postResult = post[0] as TInferSelectPost;
 
-    await redis.set(`post:${postResult.id}`, JSON.stringify(postResult), 'EX', 1209600);
+    await redis.hset(`post:${postResult.id}`, postResult);
+    await redis.expire(`post:${postResult.id}`, 1209600);
     return postResult;
 }
 
@@ -47,7 +32,7 @@ export const increaseViews = async (postId : string) : Promise<string> => {
     return requestCount as string;
 }
 
-export const findPostWithRelations = async (postId : string, next : NextFunction) : Promise<TFindPostWithAuthor> => {
+export const findPostWithRelations = async (postId : string) : Promise<TFindPostWithAuthor> => {
     const post = await db.query.PostTable.findFirst({
         where : (table, funcs) => funcs.eq(table.id, postId),
         with : {author : true}
@@ -89,7 +74,7 @@ export const startAndLimitPagination = (req : Request) => {
     return {startIndex, endIndex, pageNumber, limitNumber};
 }
 
-export const paginationPost = async (req : Request, next : NextFunction) : Promise<TPagination | TFixedPostResult[] | void> => {
+export const paginationPost = async (req : Request, next : NextFunction) : Promise<TPagination | TFindPostWithAuthor[] | void> => {
 
     try {
         const { startIndex, endIndex, pageNumber, limitNumber } = startAndLimitPagination(req);

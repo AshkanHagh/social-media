@@ -1,6 +1,5 @@
 import type { InferInsertModel, InferSelectModel } from 'drizzle-orm';
-import type { CommentTable, FollowersTable, FollowingTable, LikesTable, PostTable, ProfileInfoTable, RepliesTable, 
-    UserTable } from '../db/schema';
+import type { CommentTable, FollowersTable, FollowingTable, LikesTable, PostTable, ProfileInfoTable, RepliesTable, UserTable } from '../db/schema';
 
 type TErrorHandler = {
     statusCode : Number
@@ -8,25 +7,18 @@ type TErrorHandler = {
 }
 
 type TInferSelectUser = InferSelectModel<typeof UserTable>
-type TInferInsertUser = InferInsertModel<typeof UserTable>
 
 type TInferSelectProfileInfo = InferSelectModel<typeof ProfileInfoTable>
-type TInferInsertProfileInfo = InferInsertModel<typeof ProfileInfoTable>
 
 type TInferSelectFollowers = InferSelectModel<typeof FollowersTable>
-type TInferInsertFollowers = InferInsertModel<typeof FollowersTable>
 
 type TInferSelectPost = InferSelectModel<typeof PostTable>
-type TInferInsertPost = InferInsertModel<typeof PostTable>
 
 type TInferSelectComment = InferSelectModel<typeof CommentTable>
-type TInferInsertComment = InferInsertModel<typeof CommentTable>
 
 type TInferSelectReplies = InferSelectModel<typeof RepliesTable>
-type TInferInsertReplies = InferInsertModel<typeof RepliesTable>
 
 type TInferSelectLike = InferSelectModel<typeof LikesTable>
-type TInferInsertLike = InferInsertModel<typeof LikesTable>
 
 type TInferSelectUserWithoutPassword = Omit<TInferSelectUser, 'password'>
 
@@ -46,30 +38,6 @@ type TMapPost = {
     createdAt : TInferSelectPost['createdAt']
     updatedAT : TInferSelectPost['updatedAt']
 }
-
-type TFixedPostResult = {
-    id: TInferSelectPost['id']
-    text: TInferSelectPost['text']
-    image: TInferSelectPost['image']
-    createdAt: TInferSelectPost['createdAt']
-    updatedAt: TInferSelectPost['updatedAt']
-    author: TInferSelectUser;
-    comments: {
-        comment : {
-            id : TInferSelectComment['id'],
-            text : TInferSelectComment['text'],
-            authorId : TInferSelectUser['id'],
-            createdAt : TInferSelectComment['createdAt'],
-            updatedAt : TInferSelectComment['updatedAt']
-        }
-    }[];
-    likes: {
-        user : {
-            id : TInferSelectUser['id'],
-            username : TInferSelectUser['username']
-        }
-    }[];
-};
 
 type TFollowerProfileInfo = {
     id: TInferSelectUser['id'];

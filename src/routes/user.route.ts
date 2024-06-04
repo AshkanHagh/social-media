@@ -1,12 +1,10 @@
 import { Router, type NextFunction, type Request, type Response } from 'express';
 import { login, logout, refreshToken, register, verifyAccount } from '../controllers/auth.controller';
 import { follow, followers, userProfile, searchWithUsername, updateAccountInfo, updateAccountPassword, 
-updateProfileInfo 
-} from '../controllers/user.controller';
+    updateProfileInfo } from '../controllers/user.controller';
 import { isAuthenticated } from '../middlewares/auth';
 import validationMiddleware from '../middlewares/validation.middleware';
-import { loginSchema, registerSchema, updateInfoSchema, updatePasswordSchema, updateProfileInfoSchema, 
-    verifyAccountSchema } from '../validations/Joi';
+import { loginSchema, registerSchema, updateInfoSchema, updatePasswordSchema, updateProfileInfoSchema, verifyAccountSchema } from '../validations/Joi';
 
 const router = Router();
 
@@ -22,7 +20,7 @@ router.get('/logout', logout);
 router.get('/refresh', refreshToken);
 
 // User Routes
-router.get('/search/:query', searchWithUsername);
+router.get('/search/:query', isAuthenticated, searchWithUsername);
 
 router.put('/follow/:id', isAuthenticated, follow);
 

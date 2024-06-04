@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
 import { CatchAsyncError } from '../middlewares/catchAsyncError';
-import type { TFixedPostResult, TInferSelectComment, TInferSelectLike, TInferSelectPost, TInferSelectUser } from '../@types';
+import type { TFindPostWithAuthor, TInferSelectComment, TInferSelectLike, TInferSelectPost, TInferSelectUser } from '../@types';
 import redis from '../db/redis';
 import { increaseViews, findPostWithRelations, insertPost, paginationPost, findManyPostWithRelations, fixedPostResult, findFirstLikes, insertLike, deleteLike } from '../services/post.service';
 import { InternalServerError } from '../utils/customErrors';
@@ -28,7 +28,7 @@ export const singlePost = CatchAsyncError(async (req : Request, res : Response, 
         const cachedPost = await redis.hgetall(`post:${postId}`);
         if(!cachedPost || Object.keys(cachedPost).length <= 0) {
 
-            const post = await findPostWithRelations(postId, next);
+            const post = await findPostWithRelations(postId);
             const post_result = fixedPostResult(post);
 
             await redis.hset(`post:${postId}`, post_result);
@@ -44,7 +44,7 @@ export const singlePost = CatchAsyncError(async (req : Request, res : Response, 
 export const posts = CatchAsyncError(async (req : Request, res : Response, next : NextFunction) => {
 
     try {
-        const post = await paginationPost(req, next) as TFixedPostResult[];
+        const post = await paginationPost(req, next) as TFindPostWithAuthor[];
         res.status(200).json({success : true, posts : post});
         
     } catch (error : any) {

@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
 import { CatchAsyncError } from '../middlewares/catchAsyncError';
-import type { TActivationRequest, TInferInsertUser, TInferSelectUser } from '../@types';
+import type { TActivationRequest, TInferSelectUser, TInferSelectUserWithoutPassword } from '../@types';
 import redis from '../db/redis';
 import bcrypt from 'bcrypt';
 import createActivationToken from '../utils/activationToken';
@@ -14,7 +14,7 @@ import { findFirstUserWithEmailOrId } from '../services/user.service';
 export const register = CatchAsyncError(async (req : Request, res : Response, next : NextFunction) => {
 
     try {
-        const { fullName, email, username, password } = req.body as TInferInsertUser;
+        const { fullName, email, username, password } = req.body as TInferSelectUser;
 
         const isUserExists = await findFirstUserWithEmailOrId({username, email});
         if(isUserExists) return next(new EmailOrUsernameExistsError());
@@ -64,7 +64,7 @@ export const login = CatchAsyncError(async (req : Request, res : Response, next 
         const isPasswordMatch = await bcrypt.compare(password, user?.password || '');
         if(!user || !isPasswordMatch) return next(new InvalidEmailOrPasswordError());
 
-        sendToken(user, 200, res);
+        sendToken(user, 200, res, 'login');
         
     } catch (error : any) {
         return next(new InternalServerError(`An error occurred: ${error.message}`));
@@ -77,7 +77,7 @@ export const logout = CatchAsyncError(async (req : Request, res : Response, next
         res.cookie('access_token', '', {maxAge : 1});
         res.cookie('refresh_token', '', {maxAge : 1});
 
-        await redis.del(`user:${req.user?.id}`);
+        await redis.hdel(`user:${req.user?.id}`);
         res.status(200).json({success : true, message : 'Logged out successfully'});
 
     } catch (error : any) {
@@ -92,12 +92,12 @@ export const refreshToken = CatchAsyncError(async (req : Request, res : Response
         const decoded = jwt.verify(refresh_token, process.env.REFRESH_TOKEN as Secret) as JwtPayload & TInferSelectUser;
         if(!decoded) return next(new LoginRequiredError());
 
-        const session = await redis.get(`user:${decoded.id}`);
-        if(!session) return next(new TokenRefreshError());
+        const session = await redis.hgetall(`user:${decoded.id}`);
+        if(Object.keys(session).length <= 0) return next(new TokenRefreshError());
 
-        const user : TInferSelectUser = JSON.parse(session!);
+        const user = session as unknown as TInferSelectUser;
         req.user = user;
-        sendToken(user, 200, res);
+        sendToken(user, 200, res, 'refresh');
 
     } catch (error : any) {
         return next(new InternalServerError(`An error occurred: ${error.message}`));

@@ -9,11 +9,11 @@ const router = Router();
 router.post('/comment/new/:id', isAuthenticated, newComment);
 
 // Posts route
-router.post('/new', isAuthenticated, createPost);
-
 router.get('/:id', singlePost);
 
 router.get('/', posts);
+
+router.post('/new', isAuthenticated, createPost);
 
 router.put('/like/:id', isAuthenticated, likePost);
 

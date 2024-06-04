@@ -1,10 +1,10 @@
 import { and, eq } from 'drizzle-orm';
-import type { TFindFirstOptions, TFindUserWithProfileInfo, TFollowerProfileInfo, TInferInsertFollowers, TInferInsertProfileInfo, TInferSelectFollowers, TInferSelectProfileInfo, TInferSelectUser, TInferSelectUserWithoutPassword, TProfileUpdateInfo,  TUpdateAccountOptions} from '../@types';
+import type { TFindFirstOptions, TFindUserWithProfileInfo, TFollowerProfileInfo, TInferSelectFollowers, TInferSelectProfileInfo, TInferSelectUser, TInferSelectUserWithoutPassword, TProfileUpdateInfo,  TUpdateAccountOptions} from '../@types';
 import { db } from '../db/db';
 import { FollowersTable, ProfileInfoTable, UserTable } from '../db/schema';
-import type { NextFunction, Response } from 'express';
+import type { Response } from 'express';
 import redis from '../db/redis';
-import { InvalidUserIdError } from '../utils/customErrors';
+import sendEmail from '../utils/sendMail';
 
 export const regexQuery = (query : string) : string => {
     const escapedQuery = query.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
@@ -59,11 +59,17 @@ export const findFirstProfileInfo = async (id : string) : Promise<TInferSelectPr
 
 export const insertProfileInfo = async (bio : string, profilePic : string, gender : TInferSelectProfileInfo['gender'], id : string) : Promise<TInferSelectProfileInfo | null> => {
     const profileInfo = await db.insert(ProfileInfoTable).values({profilePic, bio, gender, userId : id}).returning();
-    const profileResult = profileInfo[0] as TInferInsertProfileInfo;
+    const profileResult = profileInfo[0] as TInferSelectProfileInfo;
     return profileResult as TInferSelectProfileInfo;
 }
 
-export const updateAccountInformation = async (profileUpdateInfo : TProfileUpdateInfo) : Promise<TInferSelectProfileInfo | null> => {
+export const updateUserRedisProfile = async (user : TInferSelectUser, profilePic : TInferSelectProfileInfo) : Promise<void> => {
+    const combineResult = combineResultsUserInfoAndProfile(user, profilePic);
+    await redis.hset(`user:${user.id}`, combineResult);
+    await redis.expire(`user:${user.id}`, 604800);
+}
+
+export const updateProfileInformation = async (profileUpdateInfo : TProfileUpdateInfo) : Promise<TInferSelectProfileInfo | null> => {
     const { bio, profilePic, gender, id } = profileUpdateInfo;
 
     const updatedProfile = await db.update(ProfileInfoTable).set({
@@ -142,6 +148,22 @@ export const updateAccount = async (options : TUpdateAccountOptions) => {
     }
 }
 
+export const sendMailForPasswordChanged = async (email : string) => {
+    await sendEmail({
+        email: email,
+        subject: 'Password Changed Successfully',
+        text: 'Your password has been successfully updated.',
+        html: `
+          <div style="font-family: Arial, sans-serif; line-height: 1.6;">
+            <h2 style="color: #4CAF50;">Password Changed Successfully</h2>
+            <p>Your password has been successfully updated. If you did not initiate this change, please contact our support team immediately.</p>
+            <p>If you have any questions, please feel free to contact us.</p>
+            <p>Best regards,<br>The Support Team</p>
+          </div>
+        `
+    });
+} 
+
 export const findFirstUserWithRelations = async (id : string) : Promise<TFindUserWithProfileInfo> => {
     const user = await db.query.UserTable.findFirst({where : (table, funcs) => funcs.eq(table.id, id), with : {profileInfo : true}});
     return user as TFindUserWithProfileInfo;
@@ -154,4 +176,11 @@ export const findManyFollowersWithRelations = async (id : string) => {
         columns : {followedId : false, followerId : false}
     });
     return user;
+}
+
+export const findManyUserFollowers = async (userId : string) => {
+    const follow = await db.query.FollowersTable.findMany({
+        where : (table, funcs) => funcs.or(funcs.eq(table.followedId, userId), funcs.eq(table.followerId, userId))
+    });
+    return follow;
 }
