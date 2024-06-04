@@ -93,7 +93,7 @@ type TUpdateAccountOptions = {
 }
 
 type TFindFirstOptions = {
-    id : TInferSelectUser['id']
+    id? : TInferSelectUser['id']
     email? : TInferSelectUser['email'],
     username? : TInferSelectUser['username'],
 }
