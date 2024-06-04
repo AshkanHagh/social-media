@@ -1,18 +1,15 @@
 import type { Request, Response, NextFunction } from 'express';
 import { CatchAsyncError } from '../middlewares/catchAsyncError';
-import ErrorHandler from '../utils/errorHandler';
-import { validateNewComment } from '../validations/Joi';
 import type { TInferSelectComment, TInferSelectUser } from '../@types';
 import { db } from '../db/db';
 import { CommentTable, PostCommentTable } from '../db/schema';
 import redis from '../db/redis';
+import { InternalServerError, InvalidUserIdError, ValidationError } from '../utils/customErrors';
 
 export const newComment = CatchAsyncError(async (req : Request, res : Response, next : NextFunction) => {
 
     try {
-        const {error, value} = validateNewComment(req.body);
-        if(error) return next(new ErrorHandler(error.message, 400));
-        const { text } = value as TInferSelectComment;
+        const { text } = req.body as TInferSelectComment;
         
         const { id : postId } = req.params as {id : string};
         const user = req.user as TInferSelectUser;
@@ -31,7 +28,7 @@ export const newComment = CatchAsyncError(async (req : Request, res : Response, 
                 likes : {with : {user : true}}
             }
         });
-        if(!post) return next(new ErrorHandler('Invalid Id - Post not found', 400));
+        if(!post) return next(new InvalidUserIdError());
 
         const author = post.author;
         const comments = post.comments.map(comment => comment.comment);
@@ -47,6 +44,6 @@ export const newComment = CatchAsyncError(async (req : Request, res : Response, 
         res.status(200).json({success : true, comment : commentResult});
 
     } catch (error : any) {
-        return next(new ErrorHandler(error.message, 400));
+        return next(new InternalServerError(`An error occurred: ${error.message}`));
     }
 });

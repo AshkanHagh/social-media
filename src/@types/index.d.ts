@@ -116,6 +116,21 @@ type TFindUserWithProfileInfo = {
     }
 }
 
+type TFindPostWithAuthor = {
+    id : TInferSelectPost['id']
+    text : TInferSelectPost['text']
+    authorId : TInferSelectPost['authorId']
+    createdAt : TInferSelectPost['createdAt']
+    updatedAt : TInferSelectPost['updatedAt']
+    image : TInferSelectPost['image']
+    author : {
+        fullName : TInferSelectUser['fullName']
+        username : TInferSelectUser['username']
+        email : TInferSelectUser['email']
+        role : TInferSelectUser['role']
+    }
+}
+
 type TPagination = {
     next? : {
         page : number,

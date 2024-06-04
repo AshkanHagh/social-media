@@ -8,14 +8,13 @@ const router = Router();
 // Comments route
 router.post('/comment/new/:id', isAuthenticated, newComment);
 
-// Like route
-router.put('/like/:id', isAuthenticated, likePost);
-
 // Posts route
-router.post('/new', [isAuthenticated, authorizeRoles('admin')],createPost);
+router.post('/new', isAuthenticated, createPost);
 
-router.get('/:id', isAuthenticated, singlePost);
+router.get('/:id', singlePost);
 
-router.get('/', isAuthenticated, posts);
+router.get('/', posts);
+
+router.put('/like/:id', isAuthenticated, likePost);
 
 export default router;
