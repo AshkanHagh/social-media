@@ -2,39 +2,53 @@ import type { Request, Response, NextFunction } from 'express';
 import { CatchAsyncError } from '../middlewares/catchAsyncError';
 import ErrorHandler from '../utils/errorHandler';
 import redis from '../db/redis';
-import type { TInferInsertProfileInfo, TInferInsertUser, TInferSelectProfileInfo, TInferSelectUser, TUpdatePassword } from '../@types';
+import type { TInferInsertProfileInfo, TInferSelectProfileInfo, TInferSelectUser, TInferSelectUserWithoutPassword, TUpdatePassword 
+} from '../@types';
 import { db } from '../db/db';
-import { FollowersTable, ProfileInfoTable, UserTable } from '../db/schema';
-import { and, eq } from 'drizzle-orm';
-import { validateAccountInfo, validatePassword, validateProfileInfo } from '../validations/Joi';
 import bcrypt from 'bcrypt';
 import sendEmail from '../utils/sendMail';
+import { searchUserWithUsername, findFirstFollower, findFirstProfileInfo, insertProfileInfo, updateAccountInformation, combineResultsUserInfoAndProfile,
+    newFollow, unFollow, updateFollowerInfo, updateAccount, findFirstUserWithEmailOrId,
+    findFirstUserWithRelations,
+    findManyFollowersWithRelations,
+} from '../services/user.service';
+import { BadRequestError, EmailOrUsernameExistsError, InternalServerError, InvalidUserIdError, UpdateFollowerInfoError, UserNotFoundError, ValidationError } from '../utils/customErrors';
+import { hashPassword } from '../services/auth.service';
 
 export const searchWithUsername = CatchAsyncError(async (req : Request, res : Response, next : NextFunction) => {
 
     try {
         const { query } = req.params as {query : string};
-        const keys = await redis.keys('user:*');
-
-        const fixedQuery = query.replace(/\s+/g, '');
+        const { active } = req.query as {active : string};
+        // This is used for filtering users. Users who have logged in within the past 7 days are considered active. The search 
+        //engine must utilize Redis. otherwise, PostgreSQL should be used.
         
-        const user = await Promise.all(keys.map(async (key : string) => {
-            const data = await redis.get(key);
-            const user: TInferSelectUser = JSON.parse(data!);
+        const regexp = new RegExp(query, 'i');
+        const matchedUsers : TInferSelectUser[] = [];
+        let cursor = '0';
 
-            if (!user.username.replace(/\s+/g, '').toLowerCase().includes(fixedQuery.toLowerCase())) {
-                const username = await db.query.UserTable.findFirst({
-                    where : (table, funcs) => funcs.ilike(table.username, fixedQuery)
-                });
-                return username;
-            }
-            return user;
-        }));
+        if(active == 'OK') {
+            do {
+                const [newCursor, keys] = await redis.scan(cursor, 'MATCH', 'user:*', 'COUNT', 100);
+                for (const key of keys) {
+                    const data : string | null = await redis.get(key);
+                    const user : TInferSelectUser = JSON.parse(data!);
+                    if(regexp.test(user.username)) {
+                        matchedUsers.push(user);
+                    }
+                }
+                cursor = newCursor;
+            } while (cursor !== '0');
 
-        res.status(200).json({success : true, user : user.filter(Boolean)});
+            if(matchedUsers.length < 0) return next(new UserNotFoundError());
+            return res.status(200).json({success : true, user : matchedUsers});
+        }
+
+        const searchedUser : TInferSelectUserWithoutPassword[] | null = await searchUserWithUsername(query);
+        res.status(200).json({success: true, user: searchedUser});
         
     } catch (error : any) {
-        return next(new ErrorHandler(error.message, 400));
+        return next(new InternalServerError(`An error occurred: ${error.message}`));
     }
 });
 
@@ -43,94 +57,61 @@ export const follow = CatchAsyncError(async (req : Request, res : Response, next
     try {
         const { id : userId } = req.params as {id : string};
         const currentUser = req.user?.id;
-        let userToModify : TInferSelectUser | undefined;
+        let userToModify : TInferSelectUserWithoutPassword | null;
 
-        const data = await redis.get(`user:${userId}`);
+        const data : string | null = await redis.get(`user:${userId}`);
         userToModify = userToModify = JSON.parse(data!);
 
-        if(userToModify === null) {
-            userToModify = await db.query.UserTable.findFirst({where : (table, funcs) => funcs.eq(table.id, userId)});
-        }
+        if(userToModify === null) userToModify = await findFirstUserWithEmailOrId({id : userId});
+        if(userToModify?.id === currentUser) return next(new BadRequestError());
 
-        if(userToModify?.id === currentUser) return next(new ErrorHandler('Cannot follow/unFollow yourself', 400));
-
-        const isUserFollowed = await db.query.FollowersTable.findFirst({
-            where : (table, funcs) => funcs.and(funcs.eq(table.followerId, currentUser!), funcs.eq(table.followedId, userToModify!.id))
-        });
-
+        const isUserFollowed = await findFirstFollower(currentUser as string, userId);
         if(!isUserFollowed) {
-            await db.insert(FollowersTable).values({followerId : currentUser, followedId : userToModify?.id});
-            return res.status(200).json({success : true, message : 'User followed successfully'});
+            await newFollow(currentUser as string, userId, res);
+            return;
         }
-
-        await db.delete(FollowersTable).where(and(eq(FollowersTable.followerId, currentUser!), 
-            eq(FollowersTable.followedId, userToModify!.id)));
-
-        res.status(200).json({success : true, message : 'User unFollowed successfully'});
+        await unFollow(currentUser as string, userId, res);
         
     } catch (error : any) {
-        return next(new ErrorHandler(error.message, 400));
+        return next(new InternalServerError(`An error occurred: ${error.message}`));
     }
 });
 
 export const updateProfileInfo = CatchAsyncError(async (req : Request, res : Response, next : NextFunction) => {
 
     try {
-        const {error, value} = validateProfileInfo(req.body);
-        if(error) return next(new ErrorHandler(error.message, 400));
-        const { profilePic, bio, gender } = value as TInferInsertProfileInfo;
+        const { profilePic, bio, gender } = req.body as TInferInsertProfileInfo;
 
         const user = req.user as TInferSelectUser;
-
-        const profile = await db.query.ProfileInfoTable.findFirst({
-            where : (table, funcs) => funcs.eq(table.userId, user.id)
-        });
-
+        const profile = await findFirstProfileInfo(user.id);
         if(!profile) {
-            const profile = await db.insert(ProfileInfoTable).values({profilePic, bio, gender, userId : user.id}).returning();
-            const profileResult = profile[0] as TInferInsertProfileInfo;
-
-            res.status(200).json({success : true, profileResult});
+            const profile = await insertProfileInfo(bio!, profilePic!, gender!, user.id);
+            res.status(200).json({success : true, profile});
         }
-
-        const updatedProfile = await db.update(ProfileInfoTable).set({
-            profilePic : profilePic || profile?.profilePic, bio : bio || profile?.bio, gender : gender || profile?.gender
-        }).where(eq(ProfileInfoTable.userId, user.id)).returning();
-        const profileResult = updatedProfile[0] as TInferSelectProfileInfo;
-
-        const combineResult = combineResults(user, profileResult);
+        const updateValue = {bio : bio || profile.bio, profilePic : profilePic || profile.profilePic, gender : gender || profile.gender, id : user.id}
+        const updatedProfile = await updateAccountInformation(updateValue);
+        const combineResult = combineResultsUserInfoAndProfile(user, updatedProfile as TInferSelectProfileInfo);
         await redis.set(`user:${user.id}`, JSON.stringify(combineResult), 'EX', 604800);
 
-        res.status(200).json({success : true, profile : combineResult});
+        res.status(200).json({success : true, profile : combineResult, updatedProfile});
         
     } catch (error : any) {
-        return next(new ErrorHandler(error.message, 400));
+        return next(new InternalServerError(`An error occurred: ${error.message}`));
     }
 });
-
-const combineResults = (user : TInferSelectUser, profile : TInferSelectProfileInfo) => {
-    return {
-        id: user.id, fullName: user.fullName, username: user.username, email: user.email, role: user.role, createdAt: user.createdAt,
-        updatedAt: user.updatedAt, profilePic: profile.profilePic, bio: profile.bio, gender: profile.gender
-    };
-}
 
 export const updateAccountPassword = CatchAsyncError(async (req : Request, res : Response, next : NextFunction) => {
 
     try {
-        const {error, value} = validatePassword(req.body);
-        if(error) return next(new ErrorHandler(error.message, 400));
-        const { oldPassword, newPassword } = value as TUpdatePassword;
+        const { oldPassword, newPassword } = req.body as TUpdatePassword;
 
-        const user = await db.query.UserTable.findFirst({where : (table, funcs) => funcs.eq(table.id, req.user!.id)}) as TInferSelectUser;
+        const user = await findFirstUserWithEmailOrId({id : req.user!.id}) as TInferSelectUser;
         const isPasswordMatch = await bcrypt.compare(oldPassword, user.password);
-
         if(!isPasswordMatch) return next(new ErrorHandler('The old password is incorrect. Please try again.', 400));
 
-        const salt = await bcrypt.genSalt(10);
-        const password = await bcrypt.hash(newPassword, salt);
+        const password = await hashPassword(newPassword);
+        await updateAccount({password, id : user.id});
 
-        await db.update(UserTable).set({password}).where(eq(UserTable.id, user.id));
         await sendEmail({
             email: user.email,
             subject: 'Password Changed Successfully',
@@ -148,37 +129,86 @@ export const updateAccountPassword = CatchAsyncError(async (req : Request, res :
         res.status(200).json({success : true, message : 'Password has been updated'});
 
     } catch (error : any) {
-        return next(new ErrorHandler(error.message, 400));
+        return next(new InternalServerError(`An error occurred: ${error.message}`));
     }
 });
 
 export const updateAccountInfo = CatchAsyncError(async (req : Request, res : Response, next : NextFunction) => {
 
     try {
-        const {error, value} = validateAccountInfo(req.body);
-        if(error) return next(new ErrorHandler(error.message, 400));
-        const { fullName, username, email } = value as TInferSelectUser;
+        const { fullName, username, email } = req.body as TInferSelectUser;
         const userToModify = req.user as TInferSelectUser;
 
-        if(email || username) {
-            const isUserExists = await db.query.UserTable.findFirst({
-                where : (table, funcs) => funcs.or(funcs.eq(table.email, email), funcs.eq(table.username, username))
-            });
+        const isUserExists = await findFirstUserWithEmailOrId({email, username, id : userToModify.id});
+        if(isUserExists) return next(new EmailOrUsernameExistsError());
 
-            if(isUserExists) return next(new ErrorHandler('Email or Username already exists', 400));
-        }
+        const updateValue = {id : userToModify.id, fullName : fullName || userToModify.fullName, email : email || userToModify.email,
+            username : username || userToModify.username
+        };
+        const updateInfo = await updateAccount(updateValue);
+        const {password, ...others} = updateInfo as TInferSelectUser
 
-        const updateInfo = await db.update(UserTable).set({
-            fullName : fullName || userToModify?.fullName, email : email || userToModify.email, username : username || userToModify.username
-        }).where(eq(UserTable.id, userToModify.id)).returning();
-
-        const {password, ...others} = updateInfo[0];
-
+        updateFollowerInfo(others).catch(error => {return next(new UpdateFollowerInfoError(error.message))});
         await redis.set(`user:${userToModify.id}`, JSON.stringify(others), 'EX', 604800);
         
         res.status(200).json({success : true, others});
         
     } catch (error : any) {
-        return next(new ErrorHandler(error.message, 400));
+        return next(new InternalServerError(`An error occurred: ${error.message}`));
+    }
+});
+
+export const userProfile = CatchAsyncError(async (req : Request, res : Response, next : NextFunction) => {
+
+    try {
+        const userId = req.user?.id;
+        const user = await findFirstUserWithRelations(userId!);
+
+        const follow = await db.query.FollowersTable.findMany({
+            where : (table, funcs) => funcs.or(funcs.eq(table.followedId, userId!), funcs.eq(table.followerId, userId!))
+        });
+        const following = follow.filter(follow => follow.followerId?.includes(userId!));
+        const followers = follow.filter(follow => follow.followedId?.includes(userId!));
+        const profileInfo = user?.profileInfo as TInferSelectProfileInfo;
+
+        const profile = combineResultsUserInfoAndProfile(user as TInferSelectUser, profileInfo);
+
+        res.status(200).json({profile, followers : followers.length, following : following.length});
+        
+    } catch (error : any) {
+        return next(new InternalServerError(`An error occurred: ${error.message}`));
+    }
+});
+
+export const followers = CatchAsyncError(async (req : Request, res : Response, next : NextFunction) => {
+
+    try {
+        const userId = req.user?.id
+        const redisKey = `followers:${userId}`;
+
+        const cachedFollowers = await redis.hgetall(redisKey);
+        const cachedFollowersArray = Object.values(cachedFollowers);
+        if(cachedFollowersArray.length > 0) {
+
+            const followersList = cachedFollowersArray.map(follow => JSON.parse(follow));
+            return res.status(200).json({success : true, followers : followersList});
+        }
+
+        const followers = await findManyFollowersWithRelations(userId!);
+
+        const mappedFollowers = followers.map(followers => {
+            const follower = followers.follower;
+            return {
+                id : follower?.id, username : follower?.username, profilePic : follower?.profileInfo?.profilePic
+            }
+        });
+        const followerEntries = mappedFollowers.filter(follow => follow.id !== undefined).flatMap(follow => [follow.id as string, 
+        JSON.stringify(follow)]);
+        await redis.hmset(redisKey, ...followerEntries);
+
+        res.status(200).json({success : true, followers : mappedFollowers});
+
+    } catch (error : any) {
+        return next(new InternalServerError(`An error occurred: ${error.message}`));
     }
 });

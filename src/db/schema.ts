@@ -16,31 +16,31 @@ export const UserTable = pgTable('users', {
     updatedAt : timestamp('updatedAt').defaultNow().$onUpdate(() => new Date())
 }, table => {
     return {
-        emailIndex : uniqueIndex('emailIndex').on(table.email),
-        uniqueUsername : unique('uniqueUsername').on(table.username)
+        indexEmail : uniqueIndex('indexEmail').on(table.email),
+        indexUsername : uniqueIndex('indexUsername').on(table.username)
     }
 });
 
 export const ProfileInfoTable = pgTable('profileInfo', {
-    userId : uuid('userId').primaryKey().references(() => UserTable.id),
+    userId : uuid('userId').primaryKey().references(() => UserTable.id, {onDelete : 'cascade'}),
     profilePic : text('profilePic'),
-    bio : varchar('fullName', {length : 500}),
+    bio : varchar('bio', {length : 1000}),
     gender : Gender('gender'),
     account_status : Status('status').default('active')
 });
 
 export const FollowersTable = pgTable('followers', {
-    followerId : uuid('followerId').references(() => UserTable.id),
-    followedId : uuid('followedId').references(() => UserTable.id)
+    followerId : uuid('followerId').references(() => UserTable.id, {onDelete : 'cascade'}),
+    followedId : uuid('followedId').references(() => UserTable.id, {onDelete : 'cascade'})
 }, table =>{
     return {pk : primaryKey({columns : [table.followedId, table.followerId]})}
 });
 
 export const PostTable = pgTable('posts', {
     id : uuid('id').primaryKey().defaultRandom(),
-    text : varchar('text', {length : 500}).notNull(),
-    image : varchar('image', {length : 500}),
-    authorId : uuid('authorId').references(() => UserTable.id).notNull(),
+    text : varchar('text', {length : 700}).notNull(),
+    image : text('image'),
+    authorId : uuid('authorId').references(() => UserTable.id, {onDelete : 'cascade'}).notNull(),
     createdAt : timestamp('createdAt').defaultNow(),
     updatedAt : timestamp('updatedAt').defaultNow().$onUpdate(() => new Date())
 });
@@ -48,7 +48,7 @@ export const PostTable = pgTable('posts', {
 export const CommentTable = pgTable('comments', {
     id : uuid('id').primaryKey().defaultRandom(),
     text : varchar('text', {length : 255}).notNull(),
-    authorId : uuid('authorId').references(() => UserTable.id),
+    authorId : uuid('authorId').references(() => UserTable.id, {onDelete : 'cascade'}),
     createdAt : timestamp('createdAt').defaultNow(),
     updatedAt : timestamp('updatedAt').defaultNow().$onUpdate(() => new Date())
 });
@@ -56,21 +56,21 @@ export const CommentTable = pgTable('comments', {
 export const RepliesTable = pgTable('replies', {
     id : uuid('id').primaryKey().defaultRandom(),
     text : varchar('text', {length : 255}).notNull(),
-    commentId : uuid('commentId').references(() => CommentTable.id),
+    commentId : uuid('commentId').references(() => CommentTable.id, {onDelete : 'cascade'}),
     createdAt : timestamp('createdAt').defaultNow(),
     updatedAt : timestamp('updatedAt').defaultNow().$onUpdate(() => new Date())
 });
 
 export const LikesTable = pgTable('likes', {
-    postId : uuid('postId').references(() => PostTable.id),
-    userId : uuid('userId').references(() => UserTable.id)
+    postId : uuid('postId').references(() => PostTable.id, {onDelete : 'cascade'}),
+    userId : uuid('userId').references(() => UserTable.id, {onDelete : 'cascade'})
 }, table => {
     return {pk : primaryKey({columns : [table.postId, table.userId]})}
 });
 
 export const PostCommentTable = pgTable('post_comment', {
-    postId : uuid('postId').references(() => PostTable.id),
-    commentId : uuid('commentId').references(() => CommentTable.id),
+    postId : uuid('postId').references(() => PostTable.id, {onDelete : 'cascade'}),
+    commentId : uuid('commentId').references(() => CommentTable.id, {onDelete : 'cascade'}),
 }, table => {
     return {pk : primaryKey({columns : [table.postId, table.commentId]})}
 });
@@ -78,15 +78,15 @@ export const PostCommentTable = pgTable('post_comment', {
 export const UserTableRelations = relations(UserTable, ({one, many}) => {
     return {
         profileInfo : one(ProfileInfoTable),
-        follower : one(FollowersTable, {
+        followers : one(FollowersTable, {
             fields : [UserTable.id],
-            references : [FollowersTable.followedId],
-            relationName : 'following'
+            references : [FollowersTable.followerId],
+            relationName : 'follower'
         }),
         followed : one(FollowersTable, {
             fields : [UserTable.id],
-            references : [FollowersTable.followerId],
-            relationName : 'followers'
+            references : [FollowersTable.followedId],
+            relationName : 'followed'
         }),
         posts : many(PostTable),
         comments : many(CommentTable),
@@ -106,12 +106,12 @@ export const ProfileInfoTableRelations = relations(ProfileInfoTable, ({one}) => 
 
 export const FollowersTableRelations = relations(FollowersTable, ({one, many}) => {
     return {
-        follower : one(UserTable, {
+        followed : one(UserTable, {
             fields : [FollowersTable.followedId],
             references : [UserTable.id],
             relationName : 'followedId'
         }),
-        followed : one(UserTable, {
+        follower : one(UserTable, {
             fields : [FollowersTable.followerId],
             references : [UserTable.id],
             relationName : 'followersId'
