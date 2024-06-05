@@ -1,4 +1,3 @@
-// src/utils/customErrors.ts
 import ErrorHandler from './errorHandler';
 
 class UserNotFoundError extends ErrorHandler {

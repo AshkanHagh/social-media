@@ -15,7 +15,7 @@ router.post('/auth/verify', validationMiddleware(verifyAccountSchema), verifyAcc
 
 router.post('/auth/login', validationMiddleware(loginSchema), login);
 
-router.get('/logout', logout);
+router.get('/logout', isAuthenticated, logout);
 
 router.get('/refresh', refreshToken);
 

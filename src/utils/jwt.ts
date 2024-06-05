@@ -3,6 +3,7 @@ import type { TCookieOption, TInferSelectUser } from '../@types';
 import type { Response } from 'express';
 import redis from '../db/redis';
 import { BadRequestError } from './customErrors';
+import { cookie } from './cookie';
 
 const accessTokenExpire = parseInt(process.env.ACCESS_TOKEN_EXPIRE || '300', 10);
 const refreshTokenExpire = parseInt(process.env.REFRESH_TOKEN_EXPIRE || '1200', 10);
@@ -21,7 +22,7 @@ export const refreshTokenOption : TCookieOption = {
     sameSite : 'lax'
 }
 
-export const sendToken = (user : TInferSelectUser, statusCode : number, res : Response, tokeFor : 'login' | 'refresh') => {
+export const sendToken = (user : TInferSelectUser, res : Response, tokeFor : 'login' | 'refresh') => {
     const accessToken = jwt.sign({id : user.id}, process.env.ACCESS_TOKEN as Secret, {expiresIn : '1h'});
     const refreshToken = jwt.sign({id : user.id}, process.env.REFRESH_TOKEN as Secret, {expiresIn : '7d'});
 
@@ -33,10 +34,7 @@ export const sendToken = (user : TInferSelectUser, statusCode : number, res : Re
     if(process.env.NODE_ENV) {
         accessTokenOption.secure = true
     }
-
-    res.cookie('access_token', accessToken, accessTokenOption);
-    res.cookie('refresh_token', refreshToken, refreshTokenOption);
-
-    if(tokeFor == 'refresh') return res.status(statusCode).json({success : true, accessToken});
-    res.status(statusCode).json({success : true, others, accessToken});
+    cookie({accessToken, refreshToken}, {accessTokenOption, refreshTokenOption}, res);
+    if(tokeFor == 'refresh') return {accessToken}
+    return {others, accessToken}
 }

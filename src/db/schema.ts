@@ -69,7 +69,7 @@ export const LikesTable = pgTable('likes', {
 });
 
 export const PostCommentTable = pgTable('post_comment', {
-    postId : uuid('postId').references(() => PostTable.id, {onDelete : 'cascade'}),
+    postId : uuid('postId').references(() => PostTable.id),
     commentId : uuid('commentId').references(() => CommentTable.id, {onDelete : 'cascade'}),
 }, table => {
     return {pk : primaryKey({columns : [table.postId, table.commentId]})}

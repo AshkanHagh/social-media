@@ -4,7 +4,7 @@ import jwt, { type JwtPayload, type Secret } from 'jsonwebtoken';
 import { CatchAsyncError } from './catchAsyncError';
 import redis from '../db/redis';
 import type { TInferSelectUser } from '../@types';
-import { AccessTokenInvalidError, InternalServerError, LoginRequiredError, RoleForbiddenError } from '../utils/customErrors';
+import { AccessTokenInvalidError, LoginRequiredError, RoleForbiddenError } from '../utils/customErrors';
 
 export const isAuthenticated = CatchAsyncError(async (req : Request, res : Response, next : NextFunction) => {
 
@@ -13,17 +13,18 @@ export const isAuthenticated = CatchAsyncError(async (req : Request, res : Respo
         if(!accessToken) return next(new LoginRequiredError());
 
         const decoded = jwt.verify(accessToken, process.env.ACCESS_TOKEN as Secret) as JwtPayload & TInferSelectUser;
+        console.log(decoded);
         if(!decoded) return next(new AccessTokenInvalidError());
 
         const userRaw = await redis.hgetall(`user:${decoded.id}`);
-        if(!userRaw) return next(new LoginRequiredError());
+        if(Object.keys(userRaw).length <= 0) return next(new LoginRequiredError());
 
         const user = userRaw as unknown as TInferSelectUser;
         req.user = user;
         next();
 
     } catch (error : any) {
-        return next(new InternalServerError());
+        return next(new ErrorHandler(`An error occurred : ${error.message}`, 400));
     }
 });
 

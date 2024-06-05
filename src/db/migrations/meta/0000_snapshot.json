@@ -1,5 +1,5 @@
 {
-  "id": "898ec23c-41c9-4541-a7e8-61b2ad97bee2",
+  "id": "3fe5219f-a812-4337-bf0a-f885afae826b",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "6",
   "dialect": "postgresql",
@@ -204,7 +204,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
+          "onDelete": "no action",
           "onUpdate": "no action"
         },
         "post_comment_commentId_comments_id_fk": {

@@ -1,23 +1,11 @@
 import { and, eq } from 'drizzle-orm';
-import type { TFindFirstOptions, TFindUserWithProfileInfo, TFollowerProfileInfo, TInferSelectFollowers, TInferSelectProfileInfo, TInferSelectUser, TInferSelectUserWithoutPassword, TProfileUpdateInfo,  TUpdateAccountOptions} from '../@types';
-import { db } from '../db/db';
-import { FollowersTable, ProfileInfoTable, UserTable } from '../db/schema';
-import type { Response } from 'express';
-import redis from '../db/redis';
-import sendEmail from '../utils/sendMail';
+import type { TFindFirstOptions, TFindUserWithProfileInfo, TFollowerProfileInfo, TInferSelectFollowers, TInferSelectProfileInfo, TInferSelectUser, TInferSelectUserWithoutPassword, TProfileUpdateInfo, TUpdateAccountOptions } from '../../../@types';
+import { combineResultsUserInfoAndProfile } from '../../../services/users/user.service';
+import { db } from '../../db';
+import { FollowersTable, ProfileInfoTable, UserTable } from '../../schema';
+import { regexQuery } from '../../../utils/regexQuery';
+import { delFollowerCache, newFollowerCache, updatedUserProfileCache } from '../../secondary-database-queries/users/users.cache';
 
-export const regexQuery = (query : string) : string => {
-    const escapedQuery = query.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
-    const regexQuery = `%${escapedQuery}%`;
-    return regexQuery;
-}
-
-export const combineResultsUserInfoAndProfile = (user : TInferSelectUser, profile : TInferSelectProfileInfo) => {
-    return {
-        id: user.id, fullName: user.fullName, username: user.username, email: user.email, role: user.role, createdAt: user.createdAt,
-        updatedAt: user.updatedAt, profilePic: profile.profilePic, bio: profile.bio, gender: profile.gender, account_status : profile.account_status
-    };
-}
 
 export const searchUserWithUsername = async (query : string) : Promise<TInferSelectUserWithoutPassword[]> => {
     const dbRegexp : string = regexQuery(query);
@@ -65,8 +53,7 @@ export const insertProfileInfo = async (bio : string, profilePic : string, gende
 
 export const updateUserRedisProfile = async (user : TInferSelectUser, profilePic : TInferSelectProfileInfo) : Promise<void> => {
     const combineResult = combineResultsUserInfoAndProfile(user, profilePic);
-    await redis.hset(`user:${user.id}`, combineResult);
-    await redis.expire(`user:${user.id}`, 604800);
+    await updatedUserProfileCache(user.id, combineResult as unknown as TInferSelectUser); // type error
 }
 
 export const updateProfileInformation = async (profileUpdateInfo : TProfileUpdateInfo) : Promise<TInferSelectProfileInfo | null> => {
@@ -80,14 +67,17 @@ export const updateProfileInformation = async (profileUpdateInfo : TProfileUpdat
     return profileResult;
 }
 
-export const findFollowerInfo = async (followerId : string, followedId : string) : Promise<TFollowerProfileInfo | null> => {
-
+export const findFirstFollowerWithRelations = async (followerId : string, followedId : string) => {
     const follows = await db.query.FollowersTable.findFirst({
         where : (table, funcs) => funcs.and(funcs.eq(table.followerId, followerId), funcs.eq(table.followedId, followedId)),
         with : {follower : {with : {profileInfo : true}}},
         columns : {followedId : false, followerId : false}
     });
+    return follows;
+}
 
+export const findFollowerInfo = async (followerId : string, followedId : string) : Promise<TFollowerProfileInfo | null> => {
+    const follows = await findFirstFollowerWithRelations(followerId, followedId);
     if (!follows || !follows.follower) return null;
 
     const follower = follows!.follower;
@@ -97,43 +87,17 @@ export const findFollowerInfo = async (followerId : string, followedId : string)
     return followedResult;
 }
 
-export const newFollow = async (followerId : string, followedId : string, res : Response) => {
+export const newFollow = async (followerId : string, followedId : string) => {
 
     const follower = await db.insert(FollowersTable).values({followerId : followerId, followedId : followedId});
     const follows : TFollowerProfileInfo | null = await findFollowerInfo(followerId as string, followedId as string);
-
-    await redis.hset(`followers:${followedId}`, followerId, JSON.stringify(follows));
-    return res.status(200).json({success : true, message : 'User followed successfully'});
+    await newFollowerCache(followedId, followerId, follows!);
 }
 
-export const unFollow = async (followerId : string, followedId : string, res : Response) => {
+export const unFollow = async (followerId : string, followedId : string) => {
 
     await db.delete(FollowersTable).where(and(eq(FollowersTable.followerId, followerId), eq(FollowersTable.followedId, followedId)));
-    await redis.hdel(`followers:${followedId}`, followerId);
-
-    res.status(200).json({success : true, message : 'User unFollowed successfully'});
-}
-
-export const updateFollowerInfo = async (user: TInferSelectUserWithoutPassword) => {
-    let cursor = '0';
-    do {
-        const [newCursor, keys] = await redis.scan(cursor, 'MATCH', `followers:*`, 'COUNT', 100);
-        
-        for(const key of keys) {
-            const followers = await redis.hgetall(key);
-            const pipeline = redis.pipeline();
-            
-            for (const followerId in followers) {
-                const follower = JSON.parse(followers[followerId]);
-                if (follower.id === user.id) {
-                    follower.username = user.username;
-                    pipeline.hset(key, followerId, JSON.stringify(follower));
-                }
-            }
-            await pipeline.exec();
-        }
-        cursor = newCursor;
-    } while (cursor !== '0');
+    await delFollowerCache(followedId, followerId);
 }
 
 export const updateAccount = async (options : TUpdateAccountOptions) => {
@@ -147,22 +111,6 @@ export const updateAccount = async (options : TUpdateAccountOptions) => {
         return updateInfoResult;
     }
 }
-
-export const sendMailForPasswordChanged = async (email : string) => {
-    await sendEmail({
-        email: email,
-        subject: 'Password Changed Successfully',
-        text: 'Your password has been successfully updated.',
-        html: `
-          <div style="font-family: Arial, sans-serif; line-height: 1.6;">
-            <h2 style="color: #4CAF50;">Password Changed Successfully</h2>
-            <p>Your password has been successfully updated. If you did not initiate this change, please contact our support team immediately.</p>
-            <p>If you have any questions, please feel free to contact us.</p>
-            <p>Best regards,<br>The Support Team</p>
-          </div>
-        `
-    });
-} 
 
 export const findFirstUserWithRelations = async (id : string) : Promise<TFindUserWithProfileInfo> => {
     const user = await db.query.UserTable.findFirst({where : (table, funcs) => funcs.eq(table.id, id), with : {profileInfo : true}});

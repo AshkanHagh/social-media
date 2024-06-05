@@ -1,5 +1,6 @@
 import type { InferInsertModel, InferSelectModel } from 'drizzle-orm';
 import type { CommentTable, FollowersTable, FollowingTable, LikesTable, PostTable, ProfileInfoTable, RepliesTable, UserTable } from '../db/schema';
+import { PgTable, TableConfig } from 'drizzle-orm/pg-core';
 
 type TErrorHandler = {
     statusCode : Number
@@ -99,6 +100,47 @@ type TFindPostWithAuthor = {
     }
 }
 
+type TCountRows = {
+    count : number
+}[]
+
+type TQueryTable<T> = PgTable<TableConfig> & {
+    findMany : (query : { with? : Record<string, boolean>, limit? : number, offset? : number }) => Promise<T[]>;
+    select : (query : string) => Promise<T[]>
+};
+  
+type TDbType = {
+    query: {
+        [key : string] : TQueryTable<string>;
+      };
+      select: (query: any) => {
+        from: (table: PgTable<TableConfig>) => Promise<{ count: number }[]>;
+    };
+};
+
+type TPaginationResult = {
+    next?: { page: number, limit: number };
+    previous?: { page: number, limit: number };
+    count?: number;
+    results?: any[];
+}
+  
+const db : TDbType = {
+    query: {
+        table: {
+            findMany: async ({ with: withRelations, limit, offset }) => {
+                return [];
+            },
+            select: async (query) => {
+                return [];
+            }
+        }
+    },
+    select : async (query) => {
+        return [];
+    }
+};
+
 type TPagination = {
     next? : {
         page : number,
@@ -139,4 +181,14 @@ type TCookieOption = {
     httpOnly : boolean
     sameSite : 'lax' | 'strict' | 'none' | undefined
     secure? : boolean
+}
+
+type TTokenPair = {
+    accessToken: string;
+    refreshToken: string;
+}
+
+type TTokenOptions = {
+    accessTokenOption: TCookieOption;
+    refreshTokenOption: TCookieOption;
 }

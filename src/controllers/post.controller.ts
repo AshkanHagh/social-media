@@ -1,21 +1,21 @@
 import type { Request, Response, NextFunction } from 'express';
 import { CatchAsyncError } from '../middlewares/catchAsyncError';
-import type { TFindPostWithAuthor, TInferSelectComment, TInferSelectLike, TInferSelectPost, TInferSelectUser } from '../@types';
-import redis from '../db/redis';
-import { increaseViews, findPostWithRelations, insertPost, paginationPost, findManyPostWithRelations, fixedPostResult, findFirstLikes, insertLike, deleteLike } from '../services/post.service';
-import { InternalServerError } from '../utils/customErrors';
+import type { TFindPostWithAuthor, TInferSelectPost, TInferSelectUser } from '../@types';
+import { newPost, paginationPost, getSinglePost, likePostService, delPost } from '../services/posts/post.service';
+import ErrorHandler from '../utils/errorHandler';
+import { PostTable } from '../db/schema';
 
 export const createPost = CatchAsyncError(async (req : Request, res : Response, next : NextFunction) => {
 
     try {
         const { text, image } = req.body as TInferSelectPost;
         const user = req.user as TInferSelectUser;
-        const post = await insertPost(user.id, text, image!);
+        const post = await newPost(user, text, image!);
 
         res.status(200).json({success : true, post});
 
     } catch (error : any) {
-        return next(new InternalServerError(`An error occurred: ${error.message}`));
+        return next(new ErrorHandler(`An error occurred : ${error.message}`, 400));
     }
 });
 
@@ -23,32 +23,23 @@ export const singlePost = CatchAsyncError(async (req : Request, res : Response, 
 
     try {
         const { id : postId } = req.params as {id : string};
-        const view = await increaseViews(postId);
-
-        const cachedPost = await redis.hgetall(`post:${postId}`);
-        if(!cachedPost || Object.keys(cachedPost).length <= 0) {
-
-            const post = await findPostWithRelations(postId);
-            const post_result = fixedPostResult(post);
-
-            await redis.hset(`post:${postId}`, post_result);
-            return res.status(200).json({success : true, view, post_result});
-        }
-        res.status(200).json({success : true, view, post : cachedPost});
+        const { view, cachedPost, post_result } = await getSinglePost(postId);
+        res.status(200).json({success : true, view, post : cachedPost == undefined ? post_result : cachedPost});
         
     } catch (error : any) {
-        return next(new InternalServerError(`An error occurred: ${error.message}`));
+        return next(new ErrorHandler(`An error occurred : ${error.message}`, 400));
     }
 });
 
 export const posts = CatchAsyncError(async (req : Request, res : Response, next : NextFunction) => {
 
     try {
-        const post = await paginationPost(req, next) as TFindPostWithAuthor[];
+        const { page, limit } = req.query as {page : string, limit : string};
+        const post = await paginationPost(PostTable as unknown as any, page, limit) as TFindPostWithAuthor[];
         res.status(200).json({success : true, posts : post});
         
     } catch (error : any) {
-        return next(new InternalServerError(`An error occurred: ${error.message}`));
+        return next(new ErrorHandler(`An error occurred : ${error.message}`, 400));
     }
 });
 
@@ -57,16 +48,25 @@ export const likePost = CatchAsyncError(async (req : Request, res : Response, ne
     try {
         const { id : postId } = req.params as {id : string};
         const user = req.user as TInferSelectUser;
-        const isLiked = await findFirstLikes(postId, user.id);
 
-        if(!isLiked) {
-            insertLike(postId, user.id);
-            return res.status(200).json({success : true, message : 'Post has been liked'});
-        }
-        deleteLike(postId, user.id);
-        return res.status(200).json({success : true, message : 'Post has been disliked'});
+        const message = await likePostService(postId, user.id);
+        res.status(200).json({success : true, message});
         
     } catch (error : any) {
-        return next(new InternalServerError(`An error occurred: ${error.message}`));
+        return next(new ErrorHandler(`An error occurred : ${error.message}`, 400));
+    }
+});
+
+export const deletePost = CatchAsyncError(async (req : Request, res : Response, next : NextFunction) => {
+
+    try {
+        const { id : postId } = req.params as {id : string};
+        const currentUserId = req.user?.id;
+
+        const message = await delPost(postId, currentUserId!);
+        res.status(200).json({success : true, message});
+
+    } catch (error : any) {
+        return next(new ErrorHandler(`An error occurred : ${error.message}`, 400));
     }
 });
