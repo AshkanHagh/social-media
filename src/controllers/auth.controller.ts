@@ -4,7 +4,7 @@ import type { TActivationRequest, TInferSelectUser } from '../@types';
 import { sendToken } from '../utils/jwt';
 import { loginUser, refreshTokenService, registerService, verifyUser } from '../services/users/auth.service';
 import ErrorHandler from '../utils/errorHandler';
-import { delCache } from '../db/secondary-database-queries/users/users.cache';
+import { delCache } from '../db/secondary-database-queries';
 
 export const register = CatchAsyncError(async (req : Request, res : Response, next : NextFunction) => {
 

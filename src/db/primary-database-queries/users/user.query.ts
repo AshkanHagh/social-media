@@ -4,7 +4,8 @@ import { combineResultsUserInfoAndProfile } from '../../../services/users/user.s
 import { db } from '../../db';
 import { FollowersTable, ProfileInfoTable, UserTable } from '../../schema';
 import { regexQuery } from '../../../utils/regexQuery';
-import { delFollowerCache, newFollowerCache, updatedUserProfileCache } from '../../secondary-database-queries/users/users.cache';
+import { delFollowerCache, newFollowerCache } from '../../secondary-database-queries/users/users.cache';
+import { insertIntoCache } from '../../secondary-database-queries';
 
 
 export const searchUserWithUsername = async (query : string) : Promise<TInferSelectUserWithoutPassword[]> => {
@@ -53,7 +54,7 @@ export const insertProfileInfo = async (bio : string, profilePic : string, gende
 
 export const updateUserRedisProfile = async (user : TInferSelectUser, profilePic : TInferSelectProfileInfo) : Promise<void> => {
     const combineResult = combineResultsUserInfoAndProfile(user, profilePic);
-    await updatedUserProfileCache(user.id, combineResult as unknown as TInferSelectUser); // type error
+    await insertIntoCache('user', user.id, combineResult as unknown as string, 604800); // i will fix later this type bug
 }
 
 export const updateProfileInformation = async (profileUpdateInfo : TProfileUpdateInfo) : Promise<TInferSelectProfileInfo | null> => {

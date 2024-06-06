@@ -31,15 +31,6 @@ declare global {
     }
 }
 
-type TMapPost = {
-    id : TInferSelectPost['id'],
-    text : TInferSelectPost['text']
-    image : TInferSelectPost['image']
-    authorId : TInferSelectUser['id']
-    createdAt : TInferSelectPost['createdAt']
-    updatedAT : TInferSelectPost['updatedAt']
-}
-
 type TFollowerProfileInfo = {
     id: TInferSelectUser['id'];
     username: TInferSelectUser['username'];
@@ -100,46 +91,20 @@ type TFindPostWithAuthor = {
     }
 }
 
-type TCountRows = {
-    count : number
-}[]
-
 type TQueryTable<T> = PgTable<TableConfig> & {
-    findMany : (query : { with? : Record<string, boolean>, limit? : number, offset? : number }) => Promise<T[]>;
-    select : (query : string) => Promise<T[]>
-};
-  
-type TDbType = {
-    query: {
-        [key : string] : TQueryTable<string>;
-      };
-      select: (query: any) => {
-        from: (table: PgTable<TableConfig>) => Promise<{ count: number }[]>;
-    };
+    findMany : (query : { with? : Record<string, boolean>, limit? : number, offset? : number }) => Promise<T[]>
 };
 
-type TPaginationResult = {
-    next?: { page: number, limit: number };
-    previous?: { page: number, limit: number };
-    count?: number;
-    results?: any[];
+type TInsertInfoRedis = {
+    profile? : TInferSelectProfileInfo
+    follower? : TInferSelectFollowers
+    post? : TInferSelectPost
+    comment? : TInferSelectComment
+    replies? : TInferSelectReplies
+    like? : TInferSelectLike
+    user? : TInferSelectUserWithoutPassword
+    userWithProfilePic? : TUserAndProfile
 }
-  
-const db : TDbType = {
-    query: {
-        table: {
-            findMany: async ({ with: withRelations, limit, offset }) => {
-                return [];
-            },
-            select: async (query) => {
-                return [];
-            }
-        }
-    },
-    select : async (query) => {
-        return [];
-    }
-};
 
 type TPagination = {
     next? : {

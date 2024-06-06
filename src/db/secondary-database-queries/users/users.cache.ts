@@ -1,11 +1,6 @@
 import type { TFollowerProfileInfo, TInferSelectUser, TInferSelectUserWithoutPassword } from '../../../@types';
 import redis from '../../redis';
 
-export const updatedUserProfileCache = async <T extends TInferSelectUserWithoutPassword>(userId : string, combineResult : T) => {
-    await redis.hset(`user:${userId}`, combineResult);
-    await redis.expire(`user:${userId}`, 604800);
-}
-
 export const newFollowerCache = async (followedId : string, followerId : string, follows : TFollowerProfileInfo) => {
     await redis.hset(`followers:${followedId}`, followerId, JSON.stringify(follows));
 }
@@ -16,15 +11,6 @@ export const delFollowerCache = async (followedId : string, followerId : string)
 
 export const addNewFollowersInCache = async (redisKey : string, ...followerEntries : string[]) => {
     await redis.hmset(redisKey, ...followerEntries);
-}
-
-export const findInCache = async (keyFor : string, id : string) => {
-    return await redis.hgetall(`${keyFor}:${id}`);
-    
-}
-
-export const delCache = async (keyFor : string, id : string) => {
-    return await redis.hdel(`${keyFor}:${id}`);
 }
 
 export const updateFollowerInfoCache = async (user : TInferSelectUserWithoutPassword) => {

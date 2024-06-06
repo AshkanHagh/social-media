@@ -1,8 +1,8 @@
 import type { TFindPostWithAuthor, TInferSelectPost, TInferSelectUser, TQueryTable } from '../../@types';
-import { increaseViews, insertPostCache } from '../../db/secondary-database-queries/posts/posts.cache';
+import { increaseViews } from '../../db/secondary-database-queries/posts/posts.cache';
 import { deleteLike, deletePostTable, findFirstLikes, findFirstPostWithPostId, findManyLimited, findPostWithRelations, insertLike, insertPost } from '../../db/primary-database-queries/posts/post.query';
 import { pagination } from '../../utils/paginations';
-import { findInCache } from '../../db/secondary-database-queries/users/users.cache';
+import { findInCache, insertIntoCache } from '../../db/secondary-database-queries';
 import { ForbiddenError, ResourceNotFoundError } from '../../utils/customErrors';
 
 export const fixedPostResult = <T extends TFindPostWithAuthor>(post : T) => {
@@ -21,7 +21,7 @@ export const newPost = async (author : TInferSelectUser, text : string, image : 
 
         const postAndAuthor = {...post, author : author};
         const combinedPostAndAuthorResult = fixedPostResult(postAndAuthor);
-        insertPostCache('post', author.id, combinedPostAndAuthorResult as unknown as string, 1209600);
+        insertIntoCache('post', author.id, combinedPostAndAuthorResult as unknown as string, 1209600);
         return post;
 
     } catch (error) {
@@ -39,7 +39,7 @@ export const getSinglePost = async (postId : string) => {
             const post = await findPostWithRelations(postId);
             const post_result = fixedPostResult(post);
 
-            await insertPostCache('post', postId, post_result as unknown as string, 1209600)
+            await insertIntoCache('post', postId, post_result as unknown as string, 1209600)
             return {view, post_result};
         }
         return {view, cachedPost}
@@ -62,7 +62,7 @@ export const paginationPost = async <T>(table : TQueryTable<T>, page : string, l
         }))
         const sortedPosts = mappedPost.sort((a, b) => new Date(b!.createdAt!).getTime() - new Date(a!.createdAt!).getTime());
         await Promise.all(mappedPost.map(async post => {
-            await insertPostCache('post', post.id, post as unknown as string, 1209600)
+            await insertIntoCache('post', post.id, post as unknown as string, 1209600)
         }));
 
         results.results = sortedPosts;

@@ -6,8 +6,8 @@ import bcrypt from 'bcrypt';
 import ErrorHandler from '../../utils/errorHandler';
 import { hashPassword } from '../../utils/hashPassword';
 import { eventEmitter } from '../../events/user.subscriptions';
-import { addNewFollowersInCache, findInCache, searchUserFromCache, updateFollowerInfoCache, updatedUserProfileCache } 
-from '../../db/secondary-database-queries/users/users.cache';
+import { addNewFollowersInCache, searchUserFromCache, updateFollowerInfoCache } from '../../db/secondary-database-queries/users/users.cache';
+import { findInCache, insertIntoCache  } from '../../db/secondary-database-queries';
 
 export const searchUsers = async (query : string, active : string, userId : string) => {
     
@@ -103,7 +103,7 @@ export const updateInfo = async (fullName : string, email : string, username : s
         const {password, ...others} = updateInfo as TInferSelectUser
 
         updateFollowerInfo(others).catch(error => {throw new UpdateFollowerInfoError(error.message)});
-        await updatedUserProfileCache(userToModify.id, others);
+        await insertIntoCache('user', userToModify.id, others as unknown as string, 604800);
         return others;
 
     } catch (error) {

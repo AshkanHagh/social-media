@@ -8,7 +8,7 @@ from '../../utils/customErrors';
 import { hashPassword } from '../../utils/hashPassword';
 import jwt, { type JwtPayload, type Secret } from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
-import { findInCache } from '../../db/secondary-database-queries/users/users.cache';
+import { findInCache } from '../../db/secondary-database-queries';
 
 export const registerService = async (fullName : string, email : string, username : string, password : string) => {
     try {
