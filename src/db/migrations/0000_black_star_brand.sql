@@ -138,5 +138,6 @@ EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;
 --> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "indexText" ON "posts" ("text");--> statement-breakpoint
 CREATE UNIQUE INDEX IF NOT EXISTS "indexEmail" ON "users" ("email");--> statement-breakpoint
 CREATE UNIQUE INDEX IF NOT EXISTS "indexUsername" ON "users" ("username");

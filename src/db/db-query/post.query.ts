@@ -1,5 +1,5 @@
 import { and, eq, sql } from 'drizzle-orm';
-import type { TFindPostWithAuthor, TInferSelectLike, TInferSelectPost } from '../../@types';
+import type { TFindPostWithRelations, TInferSelectLike, TInferSelectPost } from '../../@types';
 import { db } from '../db';
 import { CommentTable, LikesTable, PostTable } from '../schema';
 import type { PgTable, TableConfig } from 'drizzle-orm/pg-core';
@@ -17,13 +17,17 @@ export const findFirstPostWithPostId = async (postId : string) => {
     return post;
 }
 
-export const findPostWithRelations = async (postId : string) : Promise<TFindPostWithAuthor> => {
+export const findPostWithRelations = async (postId : string) : Promise<TFindPostWithRelations> => {
     const post = await db.query.PostTable.findFirst({
         where : (table, funcs) => funcs.eq(table.id, postId),
-        with : {author : true}
+        with : {
+            author : {with : {profileInfo : {columns : {profilePic : true, gender : true}}}},
+            comments : {limit : 10, columns : {commentId : false, postId : false}, with : {comment : true}},
+            likes : {limit : 10, with : {user : true}}
+        }
     });
 
-    return post as TFindPostWithAuthor;
+    return post as TFindPostWithRelations;
 }
 
 export const findManyPostWithRelations = async () => {

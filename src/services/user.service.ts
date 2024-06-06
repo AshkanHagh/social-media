@@ -26,8 +26,8 @@ export const searchUsers = async (query : string, active : string, userId : stri
         const filteredUsers = searchedUser.filter(user => user.id !== userId);
         return filteredUsers;
         
-    } catch (error) {
-        throw error;
+    } catch (error : any) {
+        throw new ErrorHandler(`An error occurred: ${error.message}`, error.statusCode);
     }
 }
 
@@ -51,8 +51,8 @@ export const followUser = async (currentUser : string, userId : string) => {
         await unFollow(currentUser as string, userId);
         return 'User unFollowed successfully';
 
-    } catch (error) {
-        throw error;
+    } catch (error : any) {
+        throw new ErrorHandler(`An error occurred: ${error.message}`, error.statusCode);
     }
 }
 
@@ -70,8 +70,8 @@ export const updateProfile = async (profilePic : string, bio : string, gender : 
         updateUserRedisProfile(user, updatedProfile!);
         return updatedProfile;
 
-    } catch (error) {
-        throw error;
+    } catch (error : any) {
+        throw new ErrorHandler(`An error occurred: ${error.message}`, error.statusCode);
     }
 }
 
@@ -86,8 +86,8 @@ export const updatePassword = async (oldPassword : string, newPassword : string,
         await updateAccount({password, id : user.id});
         eventEmitter.emit('changedPassword', user.email);
 
-    } catch (error) {
-        throw error;
+    } catch (error : any) {
+        throw new ErrorHandler(`An error occurred: ${error.message}`, error.statusCode);
     }
 }
 
@@ -106,8 +106,8 @@ export const updateInfo = async (fullName : string, email : string, username : s
         await insertIntoCache('user', userToModify.id, others as unknown as string, 604800);
         return others;
 
-    } catch (error) {
-        throw error;
+    } catch (error : any) {
+        throw new ErrorHandler(`An error occurred: ${error.message}`, error.statusCode);
     }
 }
 
@@ -123,8 +123,8 @@ export const usersProfile = async (userId : string) => {
         const profile = combineResultsUserInfoAndProfile(user as TInferSelectUser, profileInfo);
         return {profile, following, followers}
 
-    } catch (error) {
-        throw error;
+    } catch (error : any) {
+        throw new ErrorHandler(`An error occurred: ${error.message}`, error.statusCode);
     }
 }
 
@@ -164,7 +164,7 @@ export const followersInfo = async (redisKey : string, userId : string) => {
         addNewFollowersInCache(redisKey, ...followerEntries)
         return mappedFollowers;
 
-    } catch (error) {
-        throw error;
+    } catch (error : any) {
+        throw new ErrorHandler(`An error occurred: ${error.message}`, error.statusCode);
     }
 }

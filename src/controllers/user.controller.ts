@@ -15,7 +15,7 @@ export const searchWithUsername = CatchAsyncError(async (req : Request, res : Re
         res.status(200).json({success: true, user});
         
     } catch (error : any) {
-        return next(new ErrorHandler(`An error occurred : ${error.message}`, 400));
+        return next(new ErrorHandler(`An error occurred: ${error.message}`, error.statusCode));
     }
 });
 
@@ -27,7 +27,7 @@ export const follow = CatchAsyncError(async (req : Request, res : Response, next
         res.status(200).json({ success: true, message });
         
     } catch (error : any) {
-        return next(new ErrorHandler(`An error occurred : ${error.message}`, 400));
+        return next(new ErrorHandler(`An error occurred: ${error.message}`, error.statusCode));
     }
 });
 
@@ -40,7 +40,7 @@ export const updateProfileInfo = CatchAsyncError(async (req : Request, res : Res
         res.status(200).json({success : true, profile : updatedProfile});
 
     } catch (error : any) {
-        return next(new ErrorHandler(`An error occurred : ${error.message}`, 400));
+        return next(new ErrorHandler(`An error occurred: ${error.message}`, error.statusCode));
     }
 });
 
@@ -52,7 +52,7 @@ export const updateAccountPassword = CatchAsyncError(async (req : Request, res :
         res.status(200).json({success : true, message : 'Password has been updated'});
 
     } catch (error : any) {
-        return next(new ErrorHandler(`An error occurred : ${error.message}`, 400));
+        return next(new ErrorHandler(`An error occurred: ${error.message}`, error.statusCode));
     }
 });
 
@@ -65,7 +65,7 @@ export const updateAccountInfo = CatchAsyncError(async (req : Request, res : Res
         res.status(200).json({success : true, user});
         
     } catch (error : any) {
-        return next(new ErrorHandler(`An error occurred : ${error.message}`, 400));
+        return next(new ErrorHandler(`An error occurred: ${error.message}`, error.statusCode));
     }
 });
 
@@ -77,7 +77,7 @@ export const userProfile = CatchAsyncError(async (req : Request, res : Response,
         res.status(200).json({profile, followers : followers.length, following : following.length});
         
     } catch (error : any) {
-        return next(new ErrorHandler(`An error occurred : ${error.message}`, 400));
+        return next(new ErrorHandler(`An error occurred: ${error.message}`, error.statusCode));
     }
 });
 
@@ -90,6 +90,6 @@ export const followers = CatchAsyncError(async (req : Request, res : Response, n
         res.status(200).json({success : true, followers});
 
     } catch (error : any) {
-        return next(new ErrorHandler(`An error occurred : ${error.message}`, 400));
+        return next(new ErrorHandler(`An error occurred: ${error.message}`, error.statusCode));
     }
 });

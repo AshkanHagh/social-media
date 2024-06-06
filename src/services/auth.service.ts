@@ -9,6 +9,7 @@ import { hashPassword } from '../utils/hashPassword';
 import jwt, { type JwtPayload, type Secret } from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import { findInCache } from '../db/redis-query'; 
+import ErrorHandler from '../utils/errorHandler';
 
 export const registerService = async (fullName : string, email : string, username : string, password : string) => {
     try {
@@ -22,8 +23,8 @@ export const registerService = async (fullName : string, email : string, usernam
         eventEmitter.emit('register', email, activationCode);
         return token;
         
-    } catch (error) {
-        throw error;
+    } catch (error : any) {
+        throw new ErrorHandler(`An error occurred: ${error.message}`, error.statusCode);
     }
 }
 
@@ -39,8 +40,8 @@ export const verifyUser = async (activationCode : string, activationToken : stri
         if(isUserExists) throw new EmailOrUsernameExistsError();
         insertUser(fullName, email, username, password);
 
-    } catch (error) {
-        throw error;
+    } catch (error : any) {
+        throw new ErrorHandler(`An error occurred: ${error.message}`, error.statusCode);
     }
 }
 
@@ -52,8 +53,8 @@ export const loginUser = async (email : string, password : string) => {
         if(!user || !isPasswordMatch) throw new InvalidEmailOrPasswordError();
         return user;
         
-    } catch (error) {
-        throw error;
+    } catch (error : any) {
+        throw new ErrorHandler(`An error occurred: ${error.message}`, error.statusCode);
     }
 }
 
@@ -68,7 +69,7 @@ export const refreshTokenService = async (token : string) => {
         const user = session as unknown as TInferSelectUser;
         return user;
 
-    } catch (error) {
-        throw error;
+    } catch (error : any) {
+        throw new ErrorHandler(`An error occurred: ${error.message}`, error.statusCode);
     }
 }

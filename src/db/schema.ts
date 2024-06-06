@@ -1,5 +1,5 @@
 import { relations } from 'drizzle-orm';
-import { pgEnum, pgTable, primaryKey, text, timestamp, unique, uniqueIndex, uuid, varchar } from 'drizzle-orm/pg-core';
+import { index, pgEnum, pgTable, primaryKey, text, timestamp, uniqueIndex, uuid, varchar } from 'drizzle-orm/pg-core';
 
 export const Role = pgEnum('roleEnum', ['admin', 'user']);
 export const Gender = pgEnum('genderEnum', ['male', 'female']);
@@ -43,6 +43,8 @@ export const PostTable = pgTable('posts', {
     authorId : uuid('authorId').references(() => UserTable.id, {onDelete : 'cascade'}).notNull(),
     createdAt : timestamp('createdAt').defaultNow(),
     updatedAt : timestamp('updatedAt').defaultNow().$onUpdate(() => new Date())
+}, table => {
+    return {indexText : index('indexText').on(table.text)}
 });
 
 export const CommentTable = pgTable('comments', {

@@ -11,7 +11,7 @@ const db = drizzle(pool);
 const main = async () => {
     console.log('seeding started');
 
-    for(let index = 265; index <= 5000; index++) {
+    for(let index = 0; index <= 500; index++) {
 
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(faker.string.uuid(), salt);
@@ -33,12 +33,12 @@ const main = async () => {
         }).returning();
         const postResult = post[0] as TInferSelectPost;
 
-        await db.insert(FollowersTable).values({followerId : userResult.id, followedId : '98be620b-f0c0-4dac-8752-a9fe9abb487d'});
-        await db.insert(LikesTable).values({postId : '45fbf38d-ae64-4c37-bb29-a76e59b145a2', userId : userResult.id});
+        await db.insert(FollowersTable).values({followerId : userResult.id, followedId : '10506771-8a24-4dbf-8679-71f831520935'});
+        await db.insert(LikesTable).values({postId : '57fb6aa5-b0a9-4bb1-95af-0eb96ddefdcc', userId : userResult.id});
 
         const comment = await db.insert(CommentTable).values({authorId : userResult.id, text : faker.lorem.words()}).returning();
         const commentResult : TInferSelectComment = comment[0];
-        await db.insert(PostCommentTable).values({postId : '45fbf38d-ae64-4c37-bb29-a76e59b145a2', commentId : commentResult.id});
+        await db.insert(PostCommentTable).values({postId : '57fb6aa5-b0a9-4bb1-95af-0eb96ddefdcc', commentId : commentResult.id});
     }
 
     console.log('end');

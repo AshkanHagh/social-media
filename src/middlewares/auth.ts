@@ -13,7 +13,6 @@ export const isAuthenticated = CatchAsyncError(async (req : Request, res : Respo
         if(!accessToken) return next(new LoginRequiredError());
 
         const decoded = jwt.verify(accessToken, process.env.ACCESS_TOKEN as Secret) as JwtPayload & TInferSelectUser;
-        console.log(decoded);
         if(!decoded) return next(new AccessTokenInvalidError());
 
         const userRaw = await redis.hgetall(`user:${decoded.id}`);

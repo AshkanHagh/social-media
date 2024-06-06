@@ -1,11 +1,12 @@
-import type { TFindPostWithAuthor, TInferSelectPost, TInferSelectUser, TQueryTable } from '../@types';
+import type { TFindPostWithRelations, TInferSelectPost, TInferSelectUser, TQueryTable } from '../@types';
 import { increaseViews } from '../db/redis-query/posts.cache';
 import { deleteLike, deletePostTable, findFirstLikes, findFirstPostWithPostId, findManyLimited, findPostWithRelations, insertLike, insertPost } from '../db/db-query/post.query';
 import { pagination } from '../utils/paginations';
 import { findInCache, insertIntoCache } from '../db/redis-query';
 import { ForbiddenError, ResourceNotFoundError } from '../utils/customErrors';
+import ErrorHandler from '../utils/errorHandler';
 
-export const fixedPostResult = <T extends TFindPostWithAuthor>(post : T) => {
+export const fixedPostResult = <T extends TFindPostWithRelations>(post : T) => {
     const { fullName : authorFullName, email : authorEmail, username : authorUsername, role : authorRole } = post.author;
     const { id, text, image, authorId, createdAt, updatedAt } = post;
     const postResult = {
@@ -24,8 +25,8 @@ export const newPost = async (author : TInferSelectUser, text : string, image : 
         insertIntoCache('post', author.id, combinedPostAndAuthorResult as unknown as string, 1209600);
         return post;
 
-    } catch (error) {
-        throw error;
+    } catch (error : any) {
+        throw new ErrorHandler(`An error occurred: ${error.message}`, error.statusCode);
     }
 }
 
@@ -44,8 +45,8 @@ export const getSinglePost = async (postId : string) => {
         }
         return {view, cachedPost}
 
-    } catch (error) {
-        throw error;
+    } catch (error : any) {
+        throw new ErrorHandler(`An error occurred: ${error.message}`, error.statusCode);
     }
 }
 
@@ -54,7 +55,7 @@ export const paginationPost = async <T>(table : TQueryTable<T>, page : string, l
     try {
         const { results, limitNumber, startIndex } = await pagination(page, limit, table);
         const posts = await findManyLimited(limitNumber, startIndex);
-        const post = posts as unknown as TFindPostWithAuthor[];
+        const post = posts as unknown as TFindPostWithRelations[];
 
         const mappedPost = await Promise.all(post.map(async post => {
             const fixedResult = fixedPostResult(post);
@@ -62,14 +63,14 @@ export const paginationPost = async <T>(table : TQueryTable<T>, page : string, l
         }))
         const sortedPosts = mappedPost.sort((a, b) => new Date(b!.createdAt!).getTime() - new Date(a!.createdAt!).getTime());
         await Promise.all(mappedPost.map(async post => {
-            await insertIntoCache('post', post.id, post as unknown as string, 1209600)
+            await insertIntoCache('post', post.id!, post as unknown as string, 1209600)
         }));
 
         results.result = sortedPosts;
         return results
         
-    } catch (error) {
-        throw error;
+    } catch (error : any) {
+        throw new ErrorHandler(`An error occurred: ${error.message}`, error.statusCode);
     }
 }
 
@@ -81,8 +82,8 @@ export const likePostService = async (postId : string, userId : string) => {
         deleteLike(postId, userId);
         return 'Post has been disliked'
 
-    } catch (error) {
-        throw error;
+    } catch (error : any) {
+        throw new ErrorHandler(`An error occurred: ${error.message}`, error.statusCode);
     }
 }
 
@@ -95,7 +96,7 @@ export const delPost = async (postId : string, currentUserId : string) => {
         await deletePostTable(postId, currentUserId!);
         return 'Post has been deleted successfully';
         
-    } catch (error) {
-        throw error;
+    } catch (error : any) {
+        throw new ErrorHandler(`An error occurred: ${error.message}`, error.statusCode);
     }
 }

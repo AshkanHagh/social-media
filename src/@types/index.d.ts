@@ -76,7 +76,7 @@ type TFindUserWithProfileInfo = {
     }
 }
 
-type TFindPostWithAuthor = {
+type TFindPostWithRelations = {
     id : TInferSelectPost['id']
     text : TInferSelectPost['text']
     authorId : TInferSelectPost['authorId']
@@ -84,11 +84,26 @@ type TFindPostWithAuthor = {
     updatedAt : TInferSelectPost['updatedAt']
     image : TInferSelectPost['image']
     author : {
+        id? : TInferSelectUser['id']
         fullName : TInferSelectUser['fullName']
         username : TInferSelectUser['username']
         email : TInferSelectUser['email']
         role : TInferSelectUser['role']
-    }
+    },
+    comments? : {
+        comment : {
+            id : TInferSelectComment['id']
+            text : TInferSelectComment['text']
+            authorId : TInferSelectComment['authorId']
+            createdAt : TInferSelectComment['createdAt']
+            updatedAt : TInferSelectComment['updatedAt']
+        }
+    }[],
+    likes? : {
+        userId: string | null;
+        postId: string | null;
+        user: TInferSelectUserWithoutPassword
+    }[]
 }
 
 type TQueryTable<T> = PgTable<TableConfig> & {

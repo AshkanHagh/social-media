@@ -1,5 +1,5 @@
 {
-  "id": "3fe5219f-a812-4337-bf0a-f885afae826b",
+  "id": "6c2d03c8-3438-4af6-9f2c-e0d9eb8990fe",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "6",
   "dialect": "postgresql",
@@ -276,7 +276,15 @@
           "default": "now()"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "indexText": {
+          "name": "indexText",
+          "columns": [
+            "text"
+          ],
+          "isUnique": false
+        }
+      },
       "foreignKeys": {
         "posts_authorId_users_id_fk": {
           "name": "posts_authorId_users_id_fk",
