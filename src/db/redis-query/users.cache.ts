@@ -1,5 +1,5 @@
-import type { TFollowerProfileInfo, TInferSelectUser, TInferSelectUserWithoutPassword } from '../../../@types';
-import redis from '../../redis';
+import type { TFollowerProfileInfo, TInferSelectUser, TInferSelectUserWithoutPassword } from '../../@types';
+import redis from '../redis';
 
 export const newFollowerCache = async (followedId : string, followerId : string, follows : TFollowerProfileInfo) => {
     await redis.hset(`followers:${followedId}`, followerId, JSON.stringify(follows));

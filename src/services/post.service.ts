@@ -1,9 +1,9 @@
-import type { TFindPostWithAuthor, TInferSelectPost, TInferSelectUser, TQueryTable } from '../../@types';
-import { increaseViews } from '../../db/secondary-database-queries/posts/posts.cache';
-import { deleteLike, deletePostTable, findFirstLikes, findFirstPostWithPostId, findManyLimited, findPostWithRelations, insertLike, insertPost } from '../../db/primary-database-queries/posts/post.query';
-import { pagination } from '../../utils/paginations';
-import { findInCache, insertIntoCache } from '../../db/secondary-database-queries';
-import { ForbiddenError, ResourceNotFoundError } from '../../utils/customErrors';
+import type { TFindPostWithAuthor, TInferSelectPost, TInferSelectUser, TQueryTable } from '../@types';
+import { increaseViews } from '../db/redis-query/posts.cache';
+import { deleteLike, deletePostTable, findFirstLikes, findFirstPostWithPostId, findManyLimited, findPostWithRelations, insertLike, insertPost } from '../db/db-query/post.query';
+import { pagination } from '../utils/paginations';
+import { findInCache, insertIntoCache } from '../db/redis-query';
+import { ForbiddenError, ResourceNotFoundError } from '../utils/customErrors';
 
 export const fixedPostResult = <T extends TFindPostWithAuthor>(post : T) => {
     const { fullName : authorFullName, email : authorEmail, username : authorUsername, role : authorRole } = post.author;
@@ -65,7 +65,7 @@ export const paginationPost = async <T>(table : TQueryTable<T>, page : string, l
             await insertIntoCache('post', post.id, post as unknown as string, 1209600)
         }));
 
-        results.results = sortedPosts;
+        results.result = sortedPosts;
         return results
         
     } catch (error) {

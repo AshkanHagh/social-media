@@ -1,11 +1,11 @@
 import { and, eq } from 'drizzle-orm';
-import type { TFindFirstOptions, TFindUserWithProfileInfo, TFollowerProfileInfo, TInferSelectFollowers, TInferSelectProfileInfo, TInferSelectUser, TInferSelectUserWithoutPassword, TProfileUpdateInfo, TUpdateAccountOptions } from '../../../@types';
-import { combineResultsUserInfoAndProfile } from '../../../services/users/user.service';
-import { db } from '../../db';
-import { FollowersTable, ProfileInfoTable, UserTable } from '../../schema';
-import { regexQuery } from '../../../utils/regexQuery';
-import { delFollowerCache, newFollowerCache } from '../../secondary-database-queries/users/users.cache';
-import { insertIntoCache } from '../../secondary-database-queries';
+import type { TFindFirstOptions, TFindUserWithProfileInfo, TFollowerProfileInfo, TInferSelectFollowers, TInferSelectProfileInfo, TInferSelectUser, TInferSelectUserWithoutPassword, TProfileUpdateInfo, TUpdateAccountOptions } from '../../@types';
+import { combineResultsUserInfoAndProfile } from '../../services/user.service'; 
+import { db } from '../db';
+import { FollowersTable, ProfileInfoTable, UserTable } from '../schema';
+import { regexQuery } from '../../utils/regexQuery';
+import { delFollowerCache, newFollowerCache } from '../redis-query/users.cache';
+import { insertIntoCache } from '../redis-query';
 
 
 export const searchUserWithUsername = async (query : string) : Promise<TInferSelectUserWithoutPassword[]> => {

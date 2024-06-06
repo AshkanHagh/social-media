@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction } from 'express';
 import { CatchAsyncError } from '../middlewares/catchAsyncError';
 import type { TFindPostWithAuthor, TInferSelectPost, TInferSelectUser } from '../@types';
-import { newPost, paginationPost, getSinglePost, likePostService, delPost } from '../services/posts/post.service';
+import { newPost, paginationPost, getSinglePost, likePostService, delPost } from '../services/post.service';
 import ErrorHandler from '../utils/errorHandler';
 import { PostTable } from '../db/schema';
 

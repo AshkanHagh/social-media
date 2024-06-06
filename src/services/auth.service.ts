@@ -1,14 +1,14 @@
-import type { TInferSelectUser } from '../../@types';
-import { insertUser } from '../../db/primary-database-queries/users/auth.query';
-import { findFirstUserWithEmailOrId } from '../../db/primary-database-queries/users/user.query';
-import { eventEmitter } from '../../events/user.subscriptions';
-import createActivationToken from '../../utils/activationToken';
+import type { TInferSelectUser } from '../@types';
+import { insertUser } from '../db/db-query/auth.query'; 
+import { findFirstUserWithEmailOrId } from '../db/db-query/user.query'; 
+import { eventEmitter } from '../events/user.subscriptions'; 
+import createActivationToken from '../utils/activationToken'; 
 import { EmailOrUsernameExistsError, InvalidEmailOrPasswordError, InvalidVerifyCode, LoginRequiredError, TokenRefreshError } 
-from '../../utils/customErrors';
-import { hashPassword } from '../../utils/hashPassword';
+from '../utils/customErrors'
+import { hashPassword } from '../utils/hashPassword'; 
 import jwt, { type JwtPayload, type Secret } from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
-import { findInCache } from '../../db/secondary-database-queries';
+import { findInCache } from '../db/redis-query'; 
 
 export const registerService = async (fullName : string, email : string, username : string, password : string) => {
     try {

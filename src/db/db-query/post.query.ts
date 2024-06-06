@@ -1,7 +1,7 @@
 import { and, eq, sql } from 'drizzle-orm';
-import type { TFindPostWithAuthor, TInferSelectLike, TInferSelectPost } from '../../../@types';
-import { db } from '../../db';
-import { CommentTable, LikesTable, PostTable } from '../../schema';
+import type { TFindPostWithAuthor, TInferSelectLike, TInferSelectPost } from '../../@types';
+import { db } from '../db';
+import { CommentTable, LikesTable, PostTable } from '../schema';
 import type { PgTable, TableConfig } from 'drizzle-orm/pg-core';
 
 export const insertPost = async (authorId : string, text : string, image : string) : Promise<TInferSelectPost> => {

@@ -1,13 +1,13 @@
-import type { TInferSelectProfileInfo, TInferSelectUser, TInferSelectUserWithoutPassword } from '../../@types';
+import type { TInferSelectProfileInfo, TInferSelectUser, TInferSelectUserWithoutPassword } from '../@types';
 import { findFirstFollower, findFirstProfileInfo, findFirstUserWithEmailOrId, findFirstUserWithRelations, findManyFollowersWithRelations, findManyUserFollowers, insertProfileInfo, newFollow, searchUserWithUsername, unFollow, updateAccount, updateProfileInformation, updateUserRedisProfile }
-from '../../db/primary-database-queries/users/user.query';
-import { BadRequestError, EmailOrUsernameExistsError, ResourceNotFoundError, UpdateFollowerInfoError, UserNotFoundError } from '../../utils/customErrors';
+from '../db/db-query/user.query';
+import { BadRequestError, EmailOrUsernameExistsError, ResourceNotFoundError, UpdateFollowerInfoError, UserNotFoundError } from '../utils/customErrors';
 import bcrypt from 'bcrypt';
-import ErrorHandler from '../../utils/errorHandler';
-import { hashPassword } from '../../utils/hashPassword';
-import { eventEmitter } from '../../events/user.subscriptions';
-import { addNewFollowersInCache, searchUserFromCache, updateFollowerInfoCache } from '../../db/secondary-database-queries/users/users.cache';
-import { findInCache, insertIntoCache  } from '../../db/secondary-database-queries';
+import ErrorHandler from '../utils/errorHandler';
+import { hashPassword } from '../utils/hashPassword';
+import { eventEmitter } from '../events/user.subscriptions';
+import { addNewFollowersInCache, searchUserFromCache, updateFollowerInfoCache } from '../db/redis-query/users.cache';
+import { findInCache, insertIntoCache } from '../db/redis-query'  
 
 export const searchUsers = async (query : string, active : string, userId : string) => {
     

@@ -1,4 +1,4 @@
-import redis from '../../redis';
+import redis from '../redis';
 
 export const increaseViews = async (postId : string) : Promise<string> => {
     const requestCountKey = `posts:requests`;

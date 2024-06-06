@@ -2,7 +2,7 @@ import type { Request, Response, NextFunction } from 'express';
 import { CatchAsyncError } from '../middlewares/catchAsyncError';
 import ErrorHandler from '../utils/errorHandler';
 import type { TInferSelectProfileInfo, TInferSelectUser, TUpdatePassword } from '../@types';
-import { followUser, searchUsers, updateProfile, updatePassword, updateInfo, usersProfile, followersInfo } from '../services/users/user.service';
+import { followUser, searchUsers, updateProfile, updatePassword, updateInfo, usersProfile, followersInfo } from '../services/user.service';
 
 export const searchWithUsername = CatchAsyncError(async (req : Request, res : Response, next : NextFunction) => {
 

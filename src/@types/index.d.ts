@@ -107,14 +107,8 @@ type TInsertInfoRedis = {
 }
 
 type TPagination = {
-    next? : {
-        page : number,
-        limit : number
-    },
-    previous? : {
-        page : number,
-        limit : number
-    },
+    next? : {page : number, limit : number},
+    previous? : {page : number,limit : number},
     result : unknown[]
 }
 
