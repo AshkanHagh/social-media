@@ -1,10 +1,12 @@
 import type { TFindPostWithRelations, TInferSelectPost, TInferSelectUser, TQueryTable } from '../@types';
-import { increaseViews } from '../db/redis-query/posts.cache';
-import { deleteLike, deletePostTable, findFirstLikes, findFirstPostWithPostId, findManyLimited, findPostWithRelations, insertLike, insertPost } from '../db/db-query/post.query';
-import { pagination } from '../utils/paginations';
+import { findFollowersPostInCache, increaseViews } from '../db/redis-query/posts.cache';
+import { deleteLike, deletePostTable, findFirstLikes, findFirstPostWithPostId, findManyLimited, findPostWithRelations, insertLike, insertPost } 
+from '../db/db-query/post.query';
+import { pagination } from '../utils/pagination';
 import { findInCache, insertIntoCache } from '../db/redis-query';
 import { ForbiddenError, ResourceNotFoundError } from '../utils/customErrors';
 import ErrorHandler from '../utils/errorHandler';
+import { findManyUserFollowers } from '../db/db-query/user.query';
 
 export const fixedPostResult = <T extends TFindPostWithRelations>(post : T) => {
     const { fullName : authorFullName, email : authorEmail, username : authorUsername, role : authorRole } = post.author;
@@ -98,5 +100,19 @@ export const delPostService = async (postId : string, currentUserId : string) =>
         
     } catch (error : any) {
         throw new ErrorHandler(`An error occurred: ${error.message}`, error.statusCode);
+    }
+}
+
+export const getFollowersPostService = async (currentUserId : string) => {
+    try {
+        const users = await findManyUserFollowers(currentUserId);
+
+        const followingPosts = await Promise.all(
+            users.filter(user => user.followerId?.includes(currentUserId)).flatMap(async user => await findFollowersPostInCache(user.followedId!))
+        );
+        return followingPosts.flat();
+        
+    } catch (error : any) {
+        throw new ErrorHandler(`An error occurred: ${error.message}`, 400);
     }
 }

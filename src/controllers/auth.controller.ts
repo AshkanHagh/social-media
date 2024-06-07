@@ -14,7 +14,7 @@ export const register = CatchAsyncError(async (req : Request, res : Response, ne
 
         res.status(201).json({success : true, message : 'Please check your email', activationToken : token});
         
-    } catch (error : any) {
+    } catch (error) {
           return next(error);
     }
 });
@@ -26,7 +26,7 @@ export const verifyAccount = CatchAsyncError(async (req : Request, res : Respons
         await verifyUserService(activationCode, activationToken);
         res.status(200).json({success : true, message : 'You can login now'});
 
-    } catch (error : any) {
+    } catch (error) {
           return next(error);
     }
 });
@@ -40,7 +40,7 @@ export const login = CatchAsyncError(async (req : Request, res : Response, next 
         const { accessToken, others } = sendToken(user, res, 'login');
         res.status(200).json({success : true, user : others, accessToken});
         
-    } catch (error : any) {
+    } catch (error) {
           return next(error);
     }
 });
@@ -54,7 +54,7 @@ export const logout = CatchAsyncError(async (req : Request, res : Response, next
         await deleteCache(`user:${req.user!.id}`);
         res.status(200).json({success : true, message : 'Logged out successfully'});
 
-    } catch (error : any) {
+    } catch (error) {
           return next(error);
     }
 });
@@ -69,7 +69,7 @@ export const refreshToken = CatchAsyncError(async (req : Request, res : Response
         const { accessToken } = sendToken(user, res, 'refresh');
         res.status(200).json({success : true, accessToken});
 
-    } catch (error : any) {
+    } catch (error) {
           return next(error);
     }
 });

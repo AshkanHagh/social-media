@@ -70,9 +70,10 @@ export const countedRows = async (table : PgTable<TableConfig>): Promise<number>
 };
 
 export const findManyLimited = async (limit: number, offset: number) => {
-    const posts = await db.query.PostTable.findMany({
-        with : {author : true},
-        limit, offset,
-    });
+    const posts = await db.query.PostTable.findMany({with : {author : true}, limit, offset});
     return posts;
+}
+
+export const findManyFollowersPost = async (userId : string) => {
+    return await db.query.PostTable.findMany({where : (table, funcs) => funcs.not(funcs.eq(table.authorId, userId))});
 }

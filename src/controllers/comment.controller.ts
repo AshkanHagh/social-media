@@ -13,7 +13,7 @@ export const newComment = CatchAsyncError(async (req : Request, res : Response, 
         const comment = await addComment(postId, userId, text);
         res.status(200).json({success : true, comment});
 
-    } catch (error : any) {
+    } catch (error) {
         return next(error);
     }
 });
@@ -26,7 +26,7 @@ export const getComments = CatchAsyncError(async (req : Request, res : Response,
         const comments = await getPostComments(postId, limit == undefined ? 9 : +limit, page == undefined ? 0 : (+page * 10) -1);
         res.status(200).json({success : true, comments});
         
-    } catch (error : any) {
+    } catch (error) {
         return next(error);
     }
 });

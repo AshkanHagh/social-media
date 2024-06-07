@@ -15,8 +15,8 @@ export const searchWithUsername = CatchAsyncError(async (req : Request, res : Re
         const user = await searchUsersService(query, active, req.user!.id);
         res.status(200).json({success: true, user});
         
-    } catch (error : any) {
-          return next(error);
+    } catch (error) {
+        return next(error);
     }
 });
 
@@ -27,8 +27,8 @@ export const follow = CatchAsyncError(async (req : Request, res : Response, next
         const message = await followUserService(currentUser!, userId);
         res.status(200).json({ success: true, message });
         
-    } catch (error : any) {
-          return next(error);
+    } catch (error) {
+        return next(error);
     }
 });
 
@@ -40,8 +40,8 @@ export const updateProfileInfo = CatchAsyncError(async (req : Request, res : Res
         const updatedProfile = await updateProfileService(profilePic!, bio!, gender, user);
         res.status(200).json({success : true, profile : updatedProfile});
 
-    } catch (error : any) {
-          return next(error);
+    } catch (error) {
+        return next(error);
     }
 });
 
@@ -52,8 +52,8 @@ export const updateAccountPassword = CatchAsyncError(async (req : Request, res :
         await updatePasswordService(oldPassword, newPassword, req.user!.id);
         res.status(200).json({success : true, message : 'Password has been updated'});
 
-    } catch (error : any) {
-          return next(error);
+    } catch (error) {
+        return next(error);
     }
 });
 
@@ -65,8 +65,8 @@ export const updateAccountInfo = CatchAsyncError(async (req : Request, res : Res
         const user = await updateInfoService(fullName, email, username, userToModify);
         res.status(200).json({success : true, user});
         
-    } catch (error : any) {
-          return next(error);
+    } catch (error) {
+        return next(error);
     }
 });
 
@@ -77,8 +77,8 @@ export const userProfile = CatchAsyncError(async (req : Request, res : Response,
         const { profile, followers, following } = await usersProfileService(userId);
         res.status(200).json({profile, followers : followers.length, following : following.length});
         
-    } catch (error : any) {
-          return next(error);
+    } catch (error) {
+        return next(error);
     }
 });
 
@@ -90,7 +90,7 @@ export const followers = CatchAsyncError(async (req : Request, res : Response, n
         const followers = await followersInfoService(redisKey, userId);
         res.status(200).json({success : true, followers});
 
-    } catch (error : any) {
-          return next(error);
+    } catch (error) {
+        return next(error);
     }
 });

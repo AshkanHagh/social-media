@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { isAuthenticated } from '../middlewares/auth';
-import { createPost, deletePost, likePost, posts, singlePost } from '../controllers/post.controller';
+import { createPost, deletePost, getFollowersPost, likePost, posts, singlePost } from '../controllers/post.controller';
 import { addReplay, deleteCommentReplay, deleteSingleComment, editComment, editReplay, getComments, getReplies, newComment } from '../controllers/comment.controller';
 import validationMiddleware from '../middlewares/validation.middleware';
 import { newCommentSchema, newPostSchema } from '../validations/Joi';
@@ -25,6 +25,9 @@ router.patch('/replay/:id', [isAuthenticated, validationMiddleware(newCommentSch
 
 router.delete('/replay/:replayId/:commentId', isAuthenticated, deleteCommentReplay);
 
+// followersPost
+router.get('/followers', isAuthenticated, getFollowersPost);
+
 // Posts route
 router.get('/:id', singlePost);
 
@@ -35,5 +38,6 @@ router.post('/new', [isAuthenticated, validationMiddleware(newPostSchema)], crea
 router.put('/like/:id', isAuthenticated, likePost);
 
 router.delete('/:id', isAuthenticated, deletePost);
+
 
 export default router;

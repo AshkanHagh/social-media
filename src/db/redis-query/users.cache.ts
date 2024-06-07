@@ -1,4 +1,4 @@
-import { deleteCacheField } from '.';
+import { deleteCacheField, findInCache } from '.';
 import type { TFollowerProfileInfo, TInferSelectUser, TInferSelectUserWithoutPassword } from '../../@types';
 import redis from '../redis';
 
@@ -45,11 +45,8 @@ export const searchUserFromCache = async (query : string) => {
     do {
         const [newCursor, keys] = await redis.scan(cursor, 'MATCH', 'user:*', 'COUNT', 100);
         for (const key of keys) {
-            const userRaw = await redis.hgetall(key);
-            const user = userRaw as unknown as TInferSelectUser
-            if(regexp.test(user.username)) {
-                matchedUsers.push(user);
-            }
+            const user : TInferSelectUser = await findInCache(key);
+            if(regexp.test(user.username)) {matchedUsers.push(user)}
         }
         cursor = newCursor;
     } while (cursor !== '0');
