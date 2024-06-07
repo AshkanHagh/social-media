@@ -28,7 +28,7 @@ export const registerService = async (fullName : string, email : string, usernam
     }
 }
 
-export const verifyUser = async (activationCode : string, activationToken : string) => {
+export const verifyUserService = async (activationCode : string, activationToken : string) => {
     try {
         const newUser : {user : TInferSelectUser, activationCode : string} = jwt.verify(activationToken, process.env.ACTIVATION_TOKEN as Secret) as
         {user : TInferSelectUser, activationCode : string}
@@ -45,7 +45,7 @@ export const verifyUser = async (activationCode : string, activationToken : stri
     }
 }
 
-export const loginUser = async (email : string, password : string) => {
+export const loginUserService = async (email : string, password : string) => {
     try {
         const user = await findFirstUserWithEmailOrId({email}) as TInferSelectUser;
 

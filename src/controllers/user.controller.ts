@@ -2,7 +2,8 @@ import type { Request, Response, NextFunction } from 'express';
 import { CatchAsyncError } from '../middlewares/catchAsyncError';
 import ErrorHandler from '../utils/errorHandler';
 import type { TInferSelectProfileInfo, TInferSelectUser, TUpdatePassword } from '../@types';
-import { followUser, searchUsers, updateProfile, updatePassword, updateInfo, usersProfile, followersInfo } from '../services/user.service';
+import { followUserService, searchUsersService, updateProfileService, updatePasswordService, updateInfoService, usersProfileService, 
+followersInfoService } from '../services/user.service';
 
 export const searchWithUsername = CatchAsyncError(async (req : Request, res : Response, next : NextFunction) => {
 
@@ -11,7 +12,7 @@ export const searchWithUsername = CatchAsyncError(async (req : Request, res : Re
         const { active } = req.query as {active : string};
         // This is used for filtering users. Users who have logged in within the past 7 days are considered active. The search 
         //engine must utilize Redis. otherwise, PostgreSQL should be used.
-        const user = await searchUsers(query, active, req.user!.id);
+        const user = await searchUsersService(query, active, req.user!.id);
         res.status(200).json({success: true, user});
         
     } catch (error : any) {
@@ -23,7 +24,7 @@ export const follow = CatchAsyncError(async (req : Request, res : Response, next
     try {
         const { id : userId } = req.params as {id : string};
         const currentUser = req.user?.id;
-        const message = await followUser(currentUser!, userId);
+        const message = await followUserService(currentUser!, userId);
         res.status(200).json({ success: true, message });
         
     } catch (error : any) {
@@ -36,7 +37,7 @@ export const updateProfileInfo = CatchAsyncError(async (req : Request, res : Res
     try {
         const { profilePic, bio, gender } = req.body as TInferSelectProfileInfo;
         const user = req.user as TInferSelectUser;
-        const updatedProfile = await updateProfile(profilePic!, bio!, gender, user);
+        const updatedProfile = await updateProfileService(profilePic!, bio!, gender, user);
         res.status(200).json({success : true, profile : updatedProfile});
 
     } catch (error : any) {
@@ -48,7 +49,7 @@ export const updateAccountPassword = CatchAsyncError(async (req : Request, res :
 
     try {
         const { oldPassword, newPassword } = req.body as TUpdatePassword;
-        await updatePassword(oldPassword, newPassword, req.user!.id);
+        await updatePasswordService(oldPassword, newPassword, req.user!.id);
         res.status(200).json({success : true, message : 'Password has been updated'});
 
     } catch (error : any) {
@@ -61,7 +62,7 @@ export const updateAccountInfo = CatchAsyncError(async (req : Request, res : Res
     try {
         const { fullName, username, email } = req.body as TInferSelectUser;
         const userToModify = req.user as TInferSelectUser;
-        const user = await updateInfo(fullName, email, username, userToModify);
+        const user = await updateInfoService(fullName, email, username, userToModify);
         res.status(200).json({success : true, user});
         
     } catch (error : any) {
@@ -73,7 +74,7 @@ export const userProfile = CatchAsyncError(async (req : Request, res : Response,
 
     try {
         const userId = req.user!.id;
-        const { profile, followers, following } = await usersProfile(userId);
+        const { profile, followers, following } = await usersProfileService(userId);
         res.status(200).json({profile, followers : followers.length, following : following.length});
         
     } catch (error : any) {
@@ -86,7 +87,7 @@ export const followers = CatchAsyncError(async (req : Request, res : Response, n
     try {
         const userId = req.user!.id
         const redisKey = `followers:${userId}`;
-        const followers = await followersInfo(redisKey, userId);
+        const followers = await followersInfoService(redisKey, userId);
         res.status(200).json({success : true, followers});
 
     } catch (error : any) {

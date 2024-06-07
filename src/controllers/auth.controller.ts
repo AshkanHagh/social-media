@@ -2,7 +2,7 @@ import type { Request, Response, NextFunction } from 'express';
 import { CatchAsyncError } from '../middlewares/catchAsyncError';
 import type { TActivationRequest, TInferSelectUser } from '../@types';
 import { sendToken } from '../utils/jwt';
-import { loginUser, refreshTokenService, registerService, verifyUser } from '../services/auth.service';
+import { loginUserService, refreshTokenService, registerService, verifyUserService } from '../services/auth.service';
 import ErrorHandler from '../utils/errorHandler';
 import { deleteCache } from '../db/redis-query';
 
@@ -23,7 +23,7 @@ export const verifyAccount = CatchAsyncError(async (req : Request, res : Respons
 
     try {
         const { activationToken, activationCode } = req.body as TActivationRequest;
-        await verifyUser(activationCode, activationToken);
+        await verifyUserService(activationCode, activationToken);
         res.status(200).json({success : true, message : 'You can login now'});
 
     } catch (error : any) {
@@ -35,7 +35,7 @@ export const login = CatchAsyncError(async (req : Request, res : Response, next 
 
     try {
         const { email, password } = req.body as TInferSelectUser;
-        const user = await loginUser(email, password);
+        const user = await loginUserService(email, password);
 
         const { accessToken, others } = sendToken(user, res, 'login');
         res.status(200).json({success : true, user : others, accessToken});

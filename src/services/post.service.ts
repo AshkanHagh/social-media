@@ -16,7 +16,7 @@ export const fixedPostResult = <T extends TFindPostWithRelations>(post : T) => {
     return postResult;
 }
 
-export const newPost = async (author : TInferSelectUser, text : string, image : string) : Promise<TInferSelectPost> => {
+export const newPostService = async (author : TInferSelectUser, text : string, image : string) : Promise<TInferSelectPost> => {
     try {
         const post = await insertPost(author.id, text, image || '');
 
@@ -30,7 +30,7 @@ export const newPost = async (author : TInferSelectUser, text : string, image : 
     }
 }
 
-export const getSinglePost = async (postId : string) => {
+export const getSinglePostService = async (postId : string) => {
     try {
         const view = await increaseViews(postId);
 
@@ -50,7 +50,7 @@ export const getSinglePost = async (postId : string) => {
     }
 }
 
-export const paginationPost = async <T>(table : TQueryTable<T>, page : string, limit : string) => {
+export const paginationPostService = async <T>(table : TQueryTable<T>, page : string, limit : string) => {
 
     try {
         const { results, limitNumber, startIndex } = await pagination(page, limit, table);
@@ -87,7 +87,7 @@ export const likePostService = async (postId : string, userId : string) => {
     }
 }
 
-export const delPost = async (postId : string, currentUserId : string) => {
+export const delPostService = async (postId : string, currentUserId : string) => {
     try {
         const post = await findFirstPostWithPostId(postId);
         if(!post) throw new ResourceNotFoundError();

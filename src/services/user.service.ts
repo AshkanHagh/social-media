@@ -9,7 +9,7 @@ import { eventEmitter } from '../events/user.subscriptions';
 import { addNewFollowersInCache, searchUserFromCache, updateFollowerInfoCache } from '../db/redis-query/users.cache';
 import { findInCache, insertIntoCache } from '../db/redis-query'  
 
-export const searchUsers = async (query : string, active : string, userId : string) => {
+export const searchUsersService = async (query : string, active : string, userId : string) => {
     
     try {
         if(active == 'OK') {
@@ -31,7 +31,7 @@ export const searchUsers = async (query : string, active : string, userId : stri
     }
 }
 
-export const followUser = async (currentUser : string, userId : string) => {
+export const followUserService = async (currentUser : string, userId : string) => {
 
     try {
         let userToModify : TInferSelectUserWithoutPassword | null;
@@ -56,7 +56,7 @@ export const followUser = async (currentUser : string, userId : string) => {
     }
 }
 
-export const updateProfile = async (profilePic : string, bio : string, gender : TInferSelectProfileInfo['gender'], user : TInferSelectUser) => {
+export const updateProfileService = async (profilePic : string, bio : string, gender : TInferSelectProfileInfo['gender'], user : TInferSelectUser) => {
     
     try {
         const profile = await findFirstProfileInfo(user.id);
@@ -75,7 +75,7 @@ export const updateProfile = async (profilePic : string, bio : string, gender : 
     }
 }
 
-export const updatePassword = async (oldPassword : string, newPassword : string, userId : string) => {
+export const updatePasswordService = async (oldPassword : string, newPassword : string, userId : string) => {
     
     try {
         const user = await findFirstUserWithEmailOrId({id : userId}) as TInferSelectUser;
@@ -91,7 +91,7 @@ export const updatePassword = async (oldPassword : string, newPassword : string,
     }
 }
 
-export const updateInfo = async (fullName : string, email : string, username : string, userToModify : TInferSelectUser) => {
+export const updateInfoService = async (fullName : string, email : string, username : string, userToModify : TInferSelectUser) => {
     try {
         const isUserExists = await findFirstUserWithEmailOrId({email, username});
         if(isUserExists) throw new EmailOrUsernameExistsError();
@@ -111,7 +111,7 @@ export const updateInfo = async (fullName : string, email : string, username : s
     }
 }
 
-export const usersProfile = async (userId : string) => {
+export const usersProfileService = async (userId : string) => {
     try {
         const user = await findFirstUserWithRelations(userId!);
         const follow = await findManyUserFollowers(userId!);
@@ -139,7 +139,7 @@ export const updateFollowerInfo = async (user: TInferSelectUserWithoutPassword) 
     updateFollowerInfoCache(user);
 }
 
-export const followersInfo = async (redisKey : string, userId : string) => {
+export const followersInfoService = async (redisKey : string, userId : string) => {
     
     try {
         const cachedFollowers : TInferSelectFollowers = await findInCache(`followers:${userId}`);
