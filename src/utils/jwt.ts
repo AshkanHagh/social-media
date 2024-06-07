@@ -1,9 +1,8 @@
 import jwt, { type Secret } from 'jsonwebtoken';
 import type { TCookieOption, TInferSelectUser } from '../@types';
 import type { Response } from 'express';
-import redis from '../db/redis';
-import { BadRequestError } from './customErrors';
 import { cookie } from './cookie';
+import { insertIntoCache } from '../db/redis-query';
 
 const accessTokenExpire = parseInt(process.env.ACCESS_TOKEN_EXPIRE || '300', 10);
 const refreshTokenExpire = parseInt(process.env.REFRESH_TOKEN_EXPIRE || '1200', 10);
@@ -28,8 +27,7 @@ export const sendToken = (user : TInferSelectUser, res : Response, tokeFor : 'lo
 
     const {password, ...others} = user;
 
-    redis.hset(`user:${user.id}`, others).catch(error => {return new BadRequestError()});
-    redis.expire(`user:${user.id}`, 604800);
+    insertIntoCache(`user`, user.id, others, 604800);
 
     if(process.env.NODE_ENV) {
         accessTokenOption.secure = true

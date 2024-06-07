@@ -22,7 +22,7 @@ export const newPost = async (author : TInferSelectUser, text : string, image : 
 
         const postAndAuthor = {...post, author : author};
         const combinedPostAndAuthorResult = fixedPostResult(postAndAuthor);
-        insertIntoCache('post', author.id, combinedPostAndAuthorResult as unknown as string, 1209600);
+        insertIntoCache('post', author.id, combinedPostAndAuthorResult, 1209600);
         return post;
 
     } catch (error : any) {
@@ -34,13 +34,13 @@ export const getSinglePost = async (postId : string) => {
     try {
         const view = await increaseViews(postId);
 
-        const cachedPost = await findInCache('post', postId);
+        const cachedPost = await findInCache(`post:${postId}}`);
         if(!cachedPost || Object.keys(cachedPost).length <= 0) {
 
             const post = await findPostWithRelations(postId);
             const post_result = fixedPostResult(post);
 
-            await insertIntoCache('post', postId, post_result as unknown as string, 1209600)
+            await insertIntoCache('post', postId, post_result, 1209600)
             return {view, post_result};
         }
         return {view, cachedPost}
@@ -63,7 +63,7 @@ export const paginationPost = async <T>(table : TQueryTable<T>, page : string, l
         }))
         const sortedPosts = mappedPost.sort((a, b) => new Date(b!.createdAt!).getTime() - new Date(a!.createdAt!).getTime());
         await Promise.all(mappedPost.map(async post => {
-            await insertIntoCache('post', post.id!, post as unknown as string, 1209600)
+            await insertIntoCache('post', post.id!, post, 1209600)
         }));
 
         results.result = sortedPosts;

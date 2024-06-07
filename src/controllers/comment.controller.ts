@@ -1,49 +1,59 @@
-// import type { Request, Response, NextFunction } from 'express';
-// import { CatchAsyncError } from '../middlewares/catchAsyncError';
-// import type { TInferSelectComment, TInferSelectUser } from '../@types';
-// import { db } from '../db/db';
-// import { CommentTable, PostCommentTable } from '../db/schema';
-// import redis from '../db/redis';
-// import { InternalServerError, InvalidUserIdError, ValidationError } from '../utils/customErrors';
+import type { Request, Response, NextFunction } from 'express';
+import { CatchAsyncError } from '../middlewares/catchAsyncError';
+import type { TInferSelectComment } from '../@types';
+import { addComment, deleteSingleCommentService, getPostComments, updateCommentText } from '../services/comment.service';
 
-// export const newComment = CatchAsyncError(async (req : Request, res : Response, next : NextFunction) => {
+export const newComment = CatchAsyncError(async (req : Request, res : Response, next : NextFunction) => {
 
-//     try {
-//         const { text } = req.body as TInferSelectComment;
+    try {
+        const { text } = req.body as TInferSelectComment;
+        const { id : postId } = req.params as {id : string};
+        const userId = req.user!.id;
+
+        const comment = await addComment(postId, userId, text);
+        res.status(200).json({success : true, comment});
+
+    } catch (error : any) {
+        return next(error);
+    }
+});
+
+export const getComments = CatchAsyncError(async (req : Request, res : Response, next : NextFunction) => {
+
+    try {
+        const { id : postId } = req.params as {id : string};
+        const { page, limit } = req.query as {page : string, limit : string}
+        const comments = await getPostComments(postId, limit == undefined ? 9 : +limit, page == undefined ? 0 : (+page * 10) -1);
+        res.status(200).json({success : true, comments});
         
-//         const { id : postId } = req.params as {id : string};
-//         const user = req.user as TInferSelectUser;
+    } catch (error : any) {
+        return next(error);
+    }
+});
 
-//         const comment = await db.insert(CommentTable).values({authorId : user.id, text}).returning();
-//         const commentResult : TInferSelectComment = comment[0];
-//         await db.insert(PostCommentTable).values({postId, commentId : commentResult.id}).execute();
+export const editComment = CatchAsyncError(async (req : Request, res : Response, next : NextFunction) => {
 
-//         await redis.set(`comment:${commentResult.id}`, JSON.stringify(commentResult), 'EX', 1209600);
+    try {
+        const { text } = req.body as {text : string};
+        const { id : commentId } = req.params as {id : string};
 
-//         const post = await db.query.PostTable.findFirst({
-//             where : (table, funcs) => funcs.eq(table.id, postId),
-//             with : {
-//                 author : true,
-//                 comments : {columns : {commentId : false, postId : false}, with : {comment : true}},
-//                 likes : {with : {user : true}}
-//             }
-//         });
-//         if(!post) return next(new InvalidUserIdError());
+        const message = await updateCommentText(commentId, req.user!.id, text);
+        res.status(200).json({success : true, message});
+        
+    } catch (error) {
+        return next(error);
+    }
+});
 
-//         const author = post.author;
-//         const comments = post.comments.map(comment => comment.comment);
+export const deleteSingleComment = CatchAsyncError(async (req : Request, res : Response, next : NextFunction) => {
 
-//         const fixedPostResult = {
-//             id : post.id, text : post.text, image : post.image, createdAt : post.createdAt, updatedAt : post.updatedAt,
-//             author : {id : author.id, username : author.username},
-//             comment : comments.sort((a, b) => new Date(b!.createdAt!).getTime() - new Date(a!.createdAt!).getTime()),
-//             like : post.likes.map(like => like.user)
-//         }
-//         await redis.set(`post:${postId}`, JSON.stringify(fixedPostResult), 'EX', 1209600);
-
-//         res.status(200).json({success : true, comment : commentResult});
-
-//     } catch (error : any) {
-//         return next(new InternalServerError(`An error occurred: ${error.message}`));
-//     }
-// });
+    try {
+        const { id : commentId } = req.params as {id : string};
+        const currentUserId = req.user!.id;
+        const message = await deleteSingleCommentService(commentId, currentUserId);
+        res.status(200).json({success : 200, message});
+        
+    } catch (error) {
+        return next(error);
+    }
+});

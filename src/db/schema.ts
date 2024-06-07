@@ -59,8 +59,11 @@ export const RepliesTable = pgTable('replies', {
     id : uuid('id').primaryKey().defaultRandom(),
     text : varchar('text', {length : 255}).notNull(),
     commentId : uuid('commentId').references(() => CommentTable.id, {onDelete : 'cascade'}),
+    authorId : uuid('authorId').references(() => UserTable.id, {onDelete : 'cascade'}),
     createdAt : timestamp('createdAt').defaultNow(),
     updatedAt : timestamp('updatedAt').defaultNow().$onUpdate(() => new Date())
+}, table => {
+    return {indexCommentId : index('indexCommentId').on(table.commentId), indexAuthorId : index('indexAuthorId').on(table.authorId)}
 });
 
 export const LikesTable = pgTable('likes', {
@@ -92,7 +95,8 @@ export const UserTableRelations = relations(UserTable, ({one, many}) => {
         }),
         posts : many(PostTable),
         comments : many(CommentTable),
-        likes : many(LikesTable)
+        likes : many(LikesTable),
+        replies : many(RepliesTable)
     }
 });
 
@@ -163,6 +167,11 @@ export const RepliesTableRelations = relations(RepliesTable, ({one, many}) => {
         comment : one(CommentTable, {
             fields : [RepliesTable.commentId],
             references : [CommentTable.id]
+        }),
+        author : one(UserTable, {
+            fields : [RepliesTable.authorId],
+            references : [UserTable.id],
+            relationName : 'replies'
         })
     }
 });

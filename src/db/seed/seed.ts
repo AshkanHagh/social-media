@@ -33,12 +33,12 @@ const main = async () => {
         }).returning();
         const postResult = post[0] as TInferSelectPost;
 
-        await db.insert(FollowersTable).values({followerId : userResult.id, followedId : '10506771-8a24-4dbf-8679-71f831520935'});
-        await db.insert(LikesTable).values({postId : '57fb6aa5-b0a9-4bb1-95af-0eb96ddefdcc', userId : userResult.id});
+        await db.insert(FollowersTable).values({followerId : userResult.id, followedId : 'a76d48fd-7c4b-4b11-8556-348fce790979'});
+        await db.insert(LikesTable).values({postId : '35c4d880-0ef6-42f5-8502-a6b771065d20', userId : userResult.id});
 
         const comment = await db.insert(CommentTable).values({authorId : userResult.id, text : faker.lorem.words()}).returning();
         const commentResult : TInferSelectComment = comment[0];
-        await db.insert(PostCommentTable).values({postId : '57fb6aa5-b0a9-4bb1-95af-0eb96ddefdcc', commentId : commentResult.id});
+        await db.insert(PostCommentTable).values({postId : '35c4d880-0ef6-42f5-8502-a6b771065d20', commentId : commentResult.id});
     }
 
     console.log('end');

@@ -63,7 +63,7 @@ export const refreshTokenService = async (token : string) => {
         const decoded = jwt.verify(token, process.env.REFRESH_TOKEN as string) as JwtPayload & TInferSelectUser;
         if(!decoded) throw new LoginRequiredError();
 
-        const session = await findInCache('user', decoded.id);
+        const session : TInferSelectUser = await findInCache(`user:${decoded.id}`);
         if(Object.keys(session).length <= 0) throw new TokenRefreshError();
 
         const user = session as unknown as TInferSelectUser;

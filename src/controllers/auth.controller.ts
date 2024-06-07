@@ -15,7 +15,7 @@ export const register = CatchAsyncError(async (req : Request, res : Response, ne
         res.status(201).json({success : true, message : 'Please check your email', activationToken : token});
         
     } catch (error : any) {
-        return next(new ErrorHandler(`An error occurred: ${error.message}`, error.statusCode));
+          return next(error);
     }
 });
 
@@ -27,7 +27,7 @@ export const verifyAccount = CatchAsyncError(async (req : Request, res : Respons
         res.status(200).json({success : true, message : 'You can login now'});
 
     } catch (error : any) {
-        return next(new ErrorHandler(`An error occurred: ${error.message}`, error.statusCode));
+          return next(error);
     }
 });
 
@@ -41,7 +41,7 @@ export const login = CatchAsyncError(async (req : Request, res : Response, next 
         res.status(200).json({success : true, user : others, accessToken});
         
     } catch (error : any) {
-        return next(new ErrorHandler(`An error occurred: ${error.message}`, error.statusCode));
+          return next(error);
     }
 });
 
@@ -55,7 +55,7 @@ export const logout = CatchAsyncError(async (req : Request, res : Response, next
         res.status(200).json({success : true, message : 'Logged out successfully'});
 
     } catch (error : any) {
-        return next(new ErrorHandler(`An error occurred: ${error.message}`, error.statusCode));
+          return next(error);
     }
 });
 
@@ -70,6 +70,6 @@ export const refreshToken = CatchAsyncError(async (req : Request, res : Response
         res.status(200).json({success : true, accessToken});
 
     } catch (error : any) {
-        return next(new ErrorHandler(`An error occurred: ${error.message}`, error.statusCode));
+          return next(error);
     }
 });

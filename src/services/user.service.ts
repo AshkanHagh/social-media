@@ -1,4 +1,4 @@
-import type { TInferSelectProfileInfo, TInferSelectUser, TInferSelectUserWithoutPassword } from '../@types';
+import type { TInferSelectFollowers, TInferSelectProfileInfo, TInferSelectUser, TInferSelectUserWithoutPassword } from '../@types';
 import { findFirstFollower, findFirstProfileInfo, findFirstUserWithEmailOrId, findFirstUserWithRelations, findManyFollowersWithRelations, findManyUserFollowers, insertProfileInfo, newFollow, searchUserWithUsername, unFollow, updateAccount, updateProfileInformation, updateUserRedisProfile }
 from '../db/db-query/user.query';
 import { BadRequestError, EmailOrUsernameExistsError, ResourceNotFoundError, UpdateFollowerInfoError, UserNotFoundError } from '../utils/customErrors';
@@ -36,7 +36,7 @@ export const followUser = async (currentUser : string, userId : string) => {
     try {
         let userToModify : TInferSelectUserWithoutPassword | null;
 
-        const userRaw = await findInCache('user', userId);
+        const userRaw : TInferSelectUser = await findInCache(`user:${userId}`);
         userToModify = userRaw as unknown as TInferSelectUser;
 
         if(Object.keys(userRaw).length <= 0) userToModify = await findFirstUserWithEmailOrId({id : userId});
@@ -103,7 +103,7 @@ export const updateInfo = async (fullName : string, email : string, username : s
         const {password, ...others} = updateInfo as TInferSelectUser
 
         updateFollowerInfo(others).catch(error => {throw new UpdateFollowerInfoError(error.message)});
-        await insertIntoCache('user', userToModify.id, others as unknown as string, 604800);
+        await insertIntoCache('user', userToModify.id, others, 604800);
         return others;
 
     } catch (error : any) {
@@ -142,11 +142,11 @@ export const updateFollowerInfo = async (user: TInferSelectUserWithoutPassword) 
 export const followersInfo = async (redisKey : string, userId : string) => {
     
     try {
-        const cachedFollowers = await findInCache('followers', userId);
+        const cachedFollowers : TInferSelectFollowers = await findInCache(`followers:${userId}`);
         const cachedFollowersArray = Object.values(cachedFollowers);
 
         if(cachedFollowersArray.length > 0) {
-            const followersList = cachedFollowersArray.map(follow => JSON.parse(follow));
+            const followersList = cachedFollowersArray.map(follow => JSON.parse(follow!));
             return followersList;
         }
 

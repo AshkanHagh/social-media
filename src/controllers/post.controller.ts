@@ -15,7 +15,7 @@ export const createPost = CatchAsyncError(async (req : Request, res : Response, 
         res.status(200).json({success : true, post});
 
     } catch (error : any) {
-        return next(new ErrorHandler(`An error occurred: ${error.message}`, error.statusCode));
+          return next(error);
     }
 });
 
@@ -27,7 +27,7 @@ export const singlePost = CatchAsyncError(async (req : Request, res : Response, 
         res.status(200).json({success : true, view, post : cachedPost == undefined ? post_result : cachedPost});
         
     } catch (error : any) {
-        return next(new ErrorHandler(`An error occurred: ${error.message}`, error.statusCode));
+          return next(error);
     }
 });
 
@@ -39,7 +39,7 @@ export const posts = CatchAsyncError(async (req : Request, res : Response, next 
         res.status(200).json({success : true, posts : post});
         
     } catch (error : any) {
-        return next(new ErrorHandler(`An error occurred: ${error.message}`, error.statusCode));
+          return next(error);
     }
 });
 
@@ -53,7 +53,7 @@ export const likePost = CatchAsyncError(async (req : Request, res : Response, ne
         res.status(200).json({success : true, message});
         
     } catch (error : any) {
-        return next(new ErrorHandler(`An error occurred: ${error.message}`, error.statusCode));
+          return next(error);
     }
 });
 
@@ -67,6 +67,6 @@ export const deletePost = CatchAsyncError(async (req : Request, res : Response, 
         res.status(200).json({success : true, message});
 
     } catch (error : any) {
-        return next(new ErrorHandler(`An error occurred: ${error.message}`, error.statusCode));
+          return next(error);
     }
 });
