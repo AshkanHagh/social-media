@@ -10,8 +10,21 @@ export const findInCache = async <T>(key : string) => {
     return data as T;
 }
 
-export const delCache = async (keyFor : string, id : string) => {
-    return await redis.hdel(`${keyFor}:${id}`);
+export const findInCacheList = async <T>(key : string) => {
+    const data = await redis.lrange(key, 0, -1);
+    return data as T;
+}
+
+export const deleteCacheField = async (key : string, field : string) => {
+    return await redis.hdel(key, field);
+}
+
+export const deleteInCacheList = async (key : string, field : string) => {
+    return await redis.lrem(key, 0, field);
+}
+
+export const deleteCache = async (key : string) => {
+    await redis.del(key);
 }
 
 export const setExpiresTime = async (key : string, expiresTime : number) => {

@@ -1,3 +1,4 @@
+import { deleteCacheField } from '.';
 import type { TFollowerProfileInfo, TInferSelectUser, TInferSelectUserWithoutPassword } from '../../@types';
 import redis from '../redis';
 
@@ -6,7 +7,8 @@ export const newFollowerCache = async (followedId : string, followerId : string,
 }
 
 export const delFollowerCache = async (followedId : string, followerId : string) => {
-    await redis.hdel(`followers:${followedId}`, followerId);
+    // await redis.hdel(`followers:${followedId}`, followerId);
+    await deleteCacheField(`followers:${followedId}`, followerId);
 }
 
 export const addNewFollowersInCache = async (redisKey : string, ...followerEntries : string[]) => {

@@ -1,7 +1,7 @@
 import type { TInferSelectComment, TInferSelectPost, TInferSelectReplies } from '../@types';
-import { deleteComment, findPostComments, insertComment, insertPostComment, updateCommentDetails } from '../db/db-query/comment.query';
-import { findInCache, insertIntoCache } from '../db/redis-query';
-import { deleteCommentInPostCache, findCommentInPostCache, findCommentsIdInCache, insertCommentToCache } from '../db/redis-query/comment.cache';
+import { deleteComment, deleteReplay, findPostComments, insertComment, insertPostComment, insertReplay, updateCommentDetails, updateReplay } from '../db/db-query/comment.query';
+import { deleteCache, deleteInCacheList, findInCache, insertIntoCache } from '../db/redis-query';
+import { deleteCommentInPostCache, deleteRepliesOnCommentCache, findCommentsIdInCache, findRequestedKeyInCacheList, insertCommentToCache, insertReplayToCache } from '../db/redis-query/comment.cache';
 import { ForbiddenError, ResourceNotFoundError } from '../utils/customErrors';
 import ErrorHandler from '../utils/errorHandler';
 
@@ -67,11 +67,74 @@ export const updateCommentText = async (commentId : string, authorId : string, t
 
 export const deleteSingleCommentService = async (commentId : string, currentUserId : string) => {
     try {
-        const key = await findCommentInPostCache();
+        const key : string = await findRequestedKeyInCacheList('post', 'comments', commentId, 'include') as string;
+        if(Object.keys(key).length <= 0) throw new ResourceNotFoundError();
+
+        const comment : TInferSelectComment = await findInCache(`comment:${commentId}`);
+        if(comment.authorId !== currentUserId) throw new ForbiddenError();
+
+        await deleteRepliesOnCommentCache(commentId);
         await deleteComment(commentId, currentUserId);
 
-        await deleteCommentInPostCache(key!, commentId);
+        await deleteCommentInPostCache(key, commentId);
         return 'Comment has been deleted';
+        
+    } catch (error : any) {
+        throw new ErrorHandler(`An error occurred: ${error.message}`, error.statusCode);
+    }
+}
+
+export const newReplay = async (commentId : string, authorId : string, text : string) => {
+    try {
+        const replay = await insertReplay(commentId, authorId, text);
+        await insertReplayToCache(commentId, replay);
+        return replay;
+
+    } catch (error : any) {
+        throw new ErrorHandler(`An error occurred: ${error.message}`, error.statusCode);
+    }
+}
+
+export const getRepliesService = async (commentId : string) => {
+    try {
+        let replies : TInferSelectReplies[] = [];
+        const keys : string[] = await findRequestedKeyInCacheList('comment', 'replies', commentId, 'search') as string[];
+        if(keys.length <= 0) throw new ResourceNotFoundError();
+
+        await Promise.all(keys.map(async key => {
+            const replay : TInferSelectReplies =  await findInCache(key);
+            replies.push(replay);
+        }));
+        return replies;
+        
+    } catch (error : any) {
+        throw new ErrorHandler(`An error occurred: ${error.message}`, error.statusCode);
+    }
+}
+
+export const editReplayTextService = async (replayId : string, currentUserId : string, text : string) => {
+    try {
+        const replay : TInferSelectReplies = await findInCache(`replay:${replayId}`);
+        if(replay.authorId !== currentUserId) throw new ForbiddenError();
+
+        const newReplay = await updateReplay(replayId, currentUserId, text);
+        await insertIntoCache('replay', replayId, newReplay, 1209600);
+        return newReplay;
+
+    } catch (error : any) {
+        throw new ErrorHandler(`An error occurred: ${error.message}`, error.statusCode);
+    }
+}
+
+export const deleteCommentReplayService = async (replayId: string, commentId : string, currentUserId : string) => {
+    try {
+        const replay : TInferSelectReplies = await findInCache(`replay:${replayId}`);
+        if(replay.authorId !== currentUserId) throw new ForbiddenError();
+
+        await Promise.all([deleteInCacheList(`comment:${commentId}:replies`, `replay:${replayId}`), deleteCache(`replay:${replayId}`),
+        deleteReplay(replayId, currentUserId)]);
+
+        return 'Replay has been deleted';
         
     } catch (error : any) {
         throw new ErrorHandler(`An error occurred: ${error.message}`, error.statusCode);

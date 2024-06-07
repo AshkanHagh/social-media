@@ -55,11 +55,3 @@ export const newPostSchema : ObjectSchema = Joi.object({
 export const newCommentSchema : ObjectSchema = Joi.object({
     text : Joi.string().required().trim().max(500),
 });
-
-export const updatedCommentText : ObjectSchema = Joi.object({
-    text : Joi.string().required().trim().max(500)
-});
-
-export const replaySchema : ObjectSchema = Joi.object({
-    text : Joi.string().required().trim().max(500)
-});

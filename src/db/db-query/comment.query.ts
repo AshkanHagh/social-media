@@ -1,7 +1,7 @@
-import { and, eq } from "drizzle-orm";
-import type { TInferSelectComment, TInferSelectReplies } from "../../@types";
-import { db } from "../db";
-import { CommentTable, PostCommentTable, RepliesTable } from "../schema";
+import { and, eq } from 'drizzle-orm';
+import type { TInferSelectComment, TInferSelectReplies } from '../../@types';
+import { db } from '../db';
+import { CommentTable, PostCommentTable, RepliesTable } from '../schema';
 
 export const insertComment = async (authorId : string, text : string) : Promise<TInferSelectComment> => {
     const comment = await db.insert(CommentTable).values({authorId, text}).returning();
@@ -27,4 +27,19 @@ export const updateCommentDetails = async (commentId : string, authorId : string
 
 export const deleteComment = async (commentId : string, authorId : string) => {
     await db.delete(CommentTable).where(and(eq(CommentTable.id, commentId), eq(CommentTable.authorId, authorId)));
+}
+
+export const insertReplay = async (commentId : string, authorId : string, text : string) => {
+    const comment = await db.insert(RepliesTable).values({commentId, authorId, text}).returning();
+    return comment[0] as TInferSelectReplies;
+}
+
+export const updateReplay = async (replayId : string, authorId : string, text : string) => {
+    const update = await db.update(RepliesTable).set({text}).where(and(eq(RepliesTable.id, replayId), 
+    eq(RepliesTable.authorId, authorId))).returning();
+    return update[0] as TInferSelectReplies
+}
+
+export const deleteReplay = async (replayId : string, authorId : string) => {
+    await db.delete(RepliesTable).where(and(eq(RepliesTable.id, replayId), eq(RepliesTable.authorId, authorId)));
 }

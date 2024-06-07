@@ -4,7 +4,7 @@ import type { TActivationRequest, TInferSelectUser } from '../@types';
 import { sendToken } from '../utils/jwt';
 import { loginUser, refreshTokenService, registerService, verifyUser } from '../services/auth.service';
 import ErrorHandler from '../utils/errorHandler';
-import { delCache } from '../db/redis-query';
+import { deleteCache } from '../db/redis-query';
 
 export const register = CatchAsyncError(async (req : Request, res : Response, next : NextFunction) => {
 
@@ -51,7 +51,7 @@ export const logout = CatchAsyncError(async (req : Request, res : Response, next
         res.cookie('access_token', '', {maxAge : 1});
         res.cookie('refresh_token', '', {maxAge : 1});
 
-        await delCache('user', req.user!.id);
+        await deleteCache(`user:${req.user!.id}`);
         res.status(200).json({success : true, message : 'Logged out successfully'});
 
     } catch (error : any) {

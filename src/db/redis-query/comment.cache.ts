@@ -1,4 +1,4 @@
-import { findInCache, setExpiresTime } from '.';
+import { deleteCache, findInCacheList, setExpiresTime } from '.';
 import type { TInferSelectComment, TInferSelectReplies } from '../../@types';
 import redis from '../redis';
 
@@ -12,20 +12,39 @@ export const findCommentsIdInCache = async (postId : string, limit : number, off
     return await redis.lrange(`post:${postId}:comments`, offset, offset + limit -1);
 };
 
-export const findCommentInPostCache = async () => {
+export const findRequestedKeyInCacheList = async (firstKey : string, lastKey : string, commentId : string, condition : 'include' | 'search') => {
     let cursor = '0';
-    let keysList;
+    let result = [];
     do {
-        const [newCursor, keys] = await redis.scan(cursor, 'MATCH', 'post:*:comments', 'COUNT', 100);
+        const [newCursor, keys] = await redis.scan(cursor, 'MATCH', `${firstKey}:*:${lastKey}`, 'COUNT', 100);
         for (const key of keys) {
-            keysList = key
+            const commentsList: string[] = await findInCacheList(key);
+            if (condition === 'include') {
+                if (commentsList.includes(`comment:${commentId}`)) {
+                    return key;
+                }
+            }
+            if(key.includes(`comment:${commentId}:replies`)) {
+                result.push(...commentsList);
+            }
         }
         cursor = newCursor;
     } while (cursor !== '0');
-    return keysList;
+    return result;
 }
 
 export const deleteCommentInPostCache = async (key : string, commentId : string) => {
-    const commentKey = `comment:${commentId}`
+    const commentKey = `comment:${commentId}`;
     await redis.lrem(key, 0, commentKey);
+}
+
+export const insertReplayToCache = async (commentId : string, replay : TInferSelectReplies) => {
+    await Promise.all([redis.rpush(`comment:${commentId}:replies`, `replay:${replay.id}`), redis.hmset(`replay:${replay.id}`, replay)]);
+    await Promise.all([setExpiresTime(`replay:${replay.id}`, 1209600), setExpiresTime(`comment:${commentId}:replies`, 1209600)]);
+}
+
+export const deleteRepliesOnCommentCache = async (commentId : string) => {
+    const repliesId : string[] = await findRequestedKeyInCacheList(`comment`, 'replies', commentId, 'search') as string[];
+    await Promise.all(repliesId.map(async key => await deleteCache(key)));
+    await redis.del(`comment:${commentId}:replies`);
 }
