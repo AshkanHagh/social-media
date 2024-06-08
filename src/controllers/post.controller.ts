@@ -1,8 +1,8 @@
 import type { Request, Response, NextFunction } from 'express';
 import { CatchAsyncError } from '../middlewares/catchAsyncError';
-import type { TFindPostWithRelations, TInferSelectPost, TInferSelectUser } from '../@types';
-import { newPostService, paginationPostService, getSinglePostService, likePostService, delPostService, getFollowersPostService } from '../services/post.service';
-import ErrorHandler from '../utils/errorHandler';
+import type { TInferSelectPost, TInferSelectUser } from '../@types';
+import { newPostService, paginationPostService, getSinglePostService, likePostService, delPostService, getFollowersPostService } 
+from '../services/post.service';
 import { PostTable } from '../db/schema';
 
 export const createPost = CatchAsyncError(async (req : Request, res : Response, next : NextFunction) => {
@@ -15,7 +15,7 @@ export const createPost = CatchAsyncError(async (req : Request, res : Response, 
         res.status(200).json({success : true, post});
 
     } catch (error) {
-          return next(error);
+        return next(error);
     }
 });
 
@@ -27,7 +27,7 @@ export const singlePost = CatchAsyncError(async (req : Request, res : Response, 
         res.status(200).json({success : true, view, post : cachedPost == undefined ? post_result : cachedPost});
         
     } catch (error) {
-          return next(error);
+        return next(error);
     }
 });
 
@@ -39,7 +39,7 @@ export const posts = CatchAsyncError(async (req : Request, res : Response, next 
         res.status(200).json({success : true, posts : post});
         
     } catch (error) {
-          return next(error);
+        return next(error);
     }
 });
 
@@ -53,7 +53,7 @@ export const likePost = CatchAsyncError(async (req : Request, res : Response, ne
         res.status(200).json({success : true, message});
         
     } catch (error) {
-          return next(error);
+        return next(error);
     }
 });
 
@@ -67,7 +67,7 @@ export const deletePost = CatchAsyncError(async (req : Request, res : Response, 
         res.status(200).json({success : true, message});
 
     } catch (error) {
-          return next(error);
+        return next(error);
     }
 });
 

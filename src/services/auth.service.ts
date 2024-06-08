@@ -1,7 +1,7 @@
 import type { TInferSelectUser } from '../@types';
 import { insertUser } from '../db/db-query/auth.query'; 
 import { findFirstUserWithEmailOrId } from '../db/db-query/user.query'; 
-import { eventEmitter } from '../events/user.subscriptions'; 
+import { eventEmitter } from '../events/email.event'; 
 import createActivationToken from '../utils/activationToken'; 
 import { EmailOrUsernameExistsError, InvalidEmailOrPasswordError, InvalidVerifyCode, LoginRequiredError, TokenRefreshError } 
 from '../utils/customErrors'

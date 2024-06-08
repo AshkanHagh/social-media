@@ -1,6 +1,5 @@
 import type { Request, Response, NextFunction } from 'express';
 import { CatchAsyncError } from '../middlewares/catchAsyncError';
-import ErrorHandler from '../utils/errorHandler';
 import type { TInferSelectProfileInfo, TInferSelectUser, TUpdatePassword } from '../@types';
 import { followUserService, searchUsersService, updateProfileService, updatePasswordService, updateInfoService, usersProfileService, 
 followersInfoService } from '../services/user.service';

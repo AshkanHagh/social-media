@@ -5,7 +5,7 @@ import { BadRequestError, EmailOrUsernameExistsError, ResourceNotFoundError, Upd
 import bcrypt from 'bcrypt';
 import ErrorHandler from '../utils/errorHandler';
 import { hashPassword } from '../utils/hashPassword';
-import { eventEmitter } from '../events/user.subscriptions';
+import { eventEmitter } from '../events/email.event';
 import { addNewFollowersInCache, searchUserFromCache, updateFollowerInfoCache } from '../db/redis-query/users.cache';
 import { findInCache, insertIntoCache } from '../db/redis-query'  
 

@@ -3,7 +3,6 @@ import { CatchAsyncError } from '../middlewares/catchAsyncError';
 import type { TActivationRequest, TInferSelectUser } from '../@types';
 import { sendToken } from '../utils/jwt';
 import { loginUserService, refreshTokenService, registerService, verifyUserService } from '../services/auth.service';
-import ErrorHandler from '../utils/errorHandler';
 import { deleteCache } from '../db/redis-query';
 
 export const register = CatchAsyncError(async (req : Request, res : Response, next : NextFunction) => {

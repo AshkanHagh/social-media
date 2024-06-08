@@ -7,6 +7,7 @@ import { findInCache, insertIntoCache } from '../db/redis-query';
 import { ForbiddenError, ResourceNotFoundError } from '../utils/customErrors';
 import ErrorHandler from '../utils/errorHandler';
 import { findManyUserFollowers } from '../db/db-query/user.query';
+import { eventEmitter } from '../events/post.event';
 
 export const fixedPostResult = <T extends TFindPostWithRelations>(post : T) => {
     const { fullName : authorFullName, email : authorEmail, username : authorUsername, role : authorRole } = post.author;
@@ -69,6 +70,7 @@ export const paginationPostService = async <T>(table : TQueryTable<T>, page : st
         }));
 
         results.result = sortedPosts;
+        eventEmitter.emit('getAllPosts');
         return results
         
     } catch (error : any) {
