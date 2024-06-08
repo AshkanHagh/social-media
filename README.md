@@ -31,13 +31,6 @@ This Social Media API is designed to be scalable and feature-rich. It leverages 
 ```shell
 npm install -g bun
 bun install # install project dependencies
-## Installation
-
-### Install Dependencies
-
-```shell
-npm install -g bun
-bun install # install project dependencies
 ```
 
 ### Setup .env file
